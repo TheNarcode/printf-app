@@ -1,0 +1,85 @@
+{
+  "migIndex": 1,
+  "data": [
+    {
+      "path": "assets/fonts/Geist-Black.ttf",
+      "sha1": "5d0f0de60da93cd4a45a5684a5218d084c46a551"
+    },
+    {
+      "path": "assets/fonts/Geist-Bold.ttf",
+      "sha1": "4396dd6283bae2eb29ecfd5c02a3329e39d93501"
+    },
+    {
+      "path": "assets/fonts/Geist-Light.ttf",
+      "sha1": "053a4e9582295eecde414a3e6edee5dfbc70e6a7"
+    },
+    {
+      "path": "assets/fonts/Geist-Medium.ttf",
+      "sha1": "2c9b424ae4ea80e915054f164178a1b1116f27af"
+    },
+    {
+      "path": "assets/fonts/Geist-Regular.ttf",
+      "sha1": "70329e0ff9248b3f92bf84d7aa8d235f8ea1d5cb"
+    },
+    {
+      "path": "assets/fonts/Geist-SemiBold.ttf",
+      "sha1": "61a480732cd75a7b22e94c13970f9b9ea9e0ec65"
+    },
+    {
+      "path": "assets/fonts/Geist-Thin.ttf",
+      "sha1": "1f1f1ec7643162597730ac51708caf022eb4876a"
+    },
+    {
+      "path": "assets/fonts/Geist-UltraBlack.ttf",
+      "sha1": "be1998ae51bd994e5d1eccd8e431f5802632c513"
+    },
+    {
+      "path": "assets/fonts/Geist-UltraLight.ttf",
+      "sha1": "6ed826be22708f3481661e8a5fc2342bfd68c39a"
+    },
+    {
+      "path": "assets/fonts/GeistMono-Black.ttf",
+      "sha1": "d0ee462efe20f543e6f187a385e1b598a12cf945"
+    },
+    {
+      "path": "assets/fonts/GeistMono-Bold.ttf",
+      "sha1": "1193e87a900d7e061e6878ff6f80c4088aec6061"
+    },
+    {
+      "path": "assets/fonts/GeistMono-Light.ttf",
+      "sha1": "5c532ddd14945cb4f7e41f0854a530303a212ece"
+    },
+    {
+      "path": "assets/fonts/GeistMono-Medium.ttf",
+      "sha1": "42465645be2044c7a7c6f29a465fae4c65b8a341"
+    },
+    {
+      "path": "assets/fonts/GeistMono-Regular.ttf",
+      "sha1": "424fb45976f390f48b0e69af5b9c55d4933dfc17"
+    },
+    {
+      "path": "assets/fonts/GeistMono-SemiBold.ttf",
+      "sha1": "e8f71a4ceb2759831b23ef8e3a57e196332e785e"
+    },
+    {
+      "path": "assets/fonts/GeistMono-Thin.ttf",
+      "sha1": "997ea13140a6639768999eacdcf11254d80cb1df"
+    },
+    {
+      "path": "assets/fonts/GeistMono-UltraBlack.ttf",
+      "sha1": "4fae76147984f7d69c5904aa4b47e8b98ebb0a17"
+    },
+    {
+      "path": "assets/fonts/GeistMono-UltraLight.ttf",
+      "sha1": "83eac54e5f5c2df9f10bef654fbe8109d9ddf7da"
+    },
+    {
+      "path": "assets/fonts/GeistMonoVF.ttf",
+      "sha1": "d72ec9d729305fc24f38e1ba69174e93b700cd69"
+    },
+    {
+      "path": "assets/fonts/GeistVF.ttf",
+      "sha1": "9a531509e4e768e9102d11f5d7d293e3f04d9c64"
+    }
+  ]
+}

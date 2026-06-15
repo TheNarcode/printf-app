@@ -1,45 +1,45 @@
 /**
- * Sample React Native App
- * https://github.com/facebook/react-native
+ * printf — Print anything, anywhere
+ * React Native App
  *
  * @format
  */
 
-import { NewAppScreen } from '@react-native/new-app-screen';
-import { StatusBar, StyleSheet, useColorScheme, View } from 'react-native';
-import {
-  SafeAreaProvider,
-  useSafeAreaInsets,
-} from 'react-native-safe-area-context';
+import React from 'react';
+import {StatusBar} from 'react-native';
+import {SafeAreaProvider} from 'react-native-safe-area-context';
+import {ThemeProvider, useTheme} from './src/theme/ThemeContext';
+import {AuthProvider} from './src/context/AuthContext';
+import {PrintJobProvider} from './src/context/PrintJobContext';
+import AppNavigator from './src/navigation/AppNavigator';
 
-function App() {
-  const isDarkMode = useColorScheme() === 'dark';
+function AppContent() {
+  const {isDark} = useTheme();
 
   return (
+    <>
+      <StatusBar
+        barStyle={isDark ? 'light-content' : 'dark-content'}
+        backgroundColor="transparent"
+        translucent
+      />
+      <AppNavigator />
+    </>
+  );
+}
+
+function App() {
+  return (
     <SafeAreaProvider>
-      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-      <AppContent />
+      <ThemeProvider>
+        <AuthProvider>
+          <PrintJobProvider>
+            <AppContent />
+          </PrintJobProvider>
+        </AuthProvider>
+      </ThemeProvider>
     </SafeAreaProvider>
   );
 }
-
-function AppContent() {
-  const safeAreaInsets = useSafeAreaInsets();
-
-  return (
-    <View style={styles.container}>
-      <NewAppScreen
-        templateFileName="App.tsx"
-        safeAreaInsets={safeAreaInsets}
-      />
-    </View>
-  );
-}
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-});
 
 export default App;

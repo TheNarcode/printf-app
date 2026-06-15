@@ -11,6 +11,26 @@
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		761780ED2CA45674006654EE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761780EC2CA45674006654EE /* AppDelegate.swift */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
+		ED2425373C0A4FEB95B3B1F2 /* GeistMono-Light.ttf in Resources */ = {isa = PBXBuildFile; fileRef = E1C6AE7CF5FD44288F047A35 /* GeistMono-Light.ttf */; };
+		9F7777502FB24FEABBCB7E2C /* GeistMono-Black.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 60878B0D33B84C35B3028E1E /* GeistMono-Black.ttf */; };
+		CF49E5169DB54B359211B5D6 /* GeistMonoVF.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 45B96EFBEB024586A48D846D /* GeistMonoVF.ttf */; };
+		BC6911079ED34B99A75B6646 /* Geist-Black.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 8EFF5243418C48D9B6F68DE7 /* Geist-Black.ttf */; };
+		234E7FF54EC6417DBDECAC0E /* GeistMono-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 3983B91EB79B42B88025B9FD /* GeistMono-Bold.ttf */; };
+		7DB04B4A74704C6CB88A3479 /* Geist-SemiBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = B63DDF1C3E924CEE9314093E /* Geist-SemiBold.ttf */; };
+		51F5457A923A403F9540E1F3 /* Geist-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 9CF4E3EF8855436DAD20D021 /* Geist-Bold.ttf */; };
+		FBA10502746A4AAF8E6EDC78 /* Geist-UltraBlack.ttf in Resources */ = {isa = PBXBuildFile; fileRef = C1F1A3EA1DA4429E9940F5EE /* Geist-UltraBlack.ttf */; };
+		3EB8BAE2C98E4E0DBFD48FE6 /* Geist-Thin.ttf in Resources */ = {isa = PBXBuildFile; fileRef = B3309E9532514D6A8408308E /* Geist-Thin.ttf */; };
+		644B046D741240ADB9D8BD77 /* GeistMono-Thin.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 0EA8CC422BD74016A620EDF4 /* GeistMono-Thin.ttf */; };
+		6FABD1F2748F45F0A52D8808 /* Geist-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 0997B31C1DFC47568AA7A370 /* Geist-Regular.ttf */; };
+		AEF4387F128843519B9125F5 /* Geist-Medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 0F4DFCE32E474A92AF82625F /* Geist-Medium.ttf */; };
+		87F459068331452AB0B678EF /* GeistMono-UltraLight.ttf in Resources */ = {isa = PBXBuildFile; fileRef = B9CA47073E8B4086B00F0D39 /* GeistMono-UltraLight.ttf */; };
+		AB5FD7612A5D4B62906E613D /* GeistMono-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 32A9B38B92434831A9E74A81 /* GeistMono-Regular.ttf */; };
+		A860F6F202B04533A7B589BB /* Geist-Light.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 2511AAB9988D447B9A71CB34 /* Geist-Light.ttf */; };
+		E7DFA50EC1FF410BBDB58052 /* GeistMono-SemiBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 3337B909696841699E7E7018 /* GeistMono-SemiBold.ttf */; };
+		601941795D6147209BB5B534 /* GeistMono-UltraBlack.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 5FF6D74A6B6641F499742BB1 /* GeistMono-UltraBlack.ttf */; };
+		2DA77DB2126142DA8B13A94D /* GeistVF.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F65D3672F8E34AF4B0347272 /* GeistVF.ttf */; };
+		48CEC743E38744E299ED047B /* Geist-UltraLight.ttf in Resources */ = {isa = PBXBuildFile; fileRef = A0F8976D2A8248FBAC0F55F2 /* Geist-UltraLight.ttf */; };
+		C0754A72925D44179444EC39 /* GeistMono-Medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 310ABA008D8448ECBF220DA7 /* GeistMono-Medium.ttf */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -24,6 +44,26 @@
 		761780EC2CA45674006654EE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = printf/AppDelegate.swift; sourceTree = "<group>"; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = printf/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
+		E1C6AE7CF5FD44288F047A35 /* GeistMono-Light.ttf */ = {isa = PBXFileReference; name = "GeistMono-Light.ttf"; path = "../assets/fonts/GeistMono-Light.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		60878B0D33B84C35B3028E1E /* GeistMono-Black.ttf */ = {isa = PBXFileReference; name = "GeistMono-Black.ttf"; path = "../assets/fonts/GeistMono-Black.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		45B96EFBEB024586A48D846D /* GeistMonoVF.ttf */ = {isa = PBXFileReference; name = "GeistMonoVF.ttf"; path = "../assets/fonts/GeistMonoVF.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		8EFF5243418C48D9B6F68DE7 /* Geist-Black.ttf */ = {isa = PBXFileReference; name = "Geist-Black.ttf"; path = "../assets/fonts/Geist-Black.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		3983B91EB79B42B88025B9FD /* GeistMono-Bold.ttf */ = {isa = PBXFileReference; name = "GeistMono-Bold.ttf"; path = "../assets/fonts/GeistMono-Bold.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		B63DDF1C3E924CEE9314093E /* Geist-SemiBold.ttf */ = {isa = PBXFileReference; name = "Geist-SemiBold.ttf"; path = "../assets/fonts/Geist-SemiBold.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		9CF4E3EF8855436DAD20D021 /* Geist-Bold.ttf */ = {isa = PBXFileReference; name = "Geist-Bold.ttf"; path = "../assets/fonts/Geist-Bold.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		C1F1A3EA1DA4429E9940F5EE /* Geist-UltraBlack.ttf */ = {isa = PBXFileReference; name = "Geist-UltraBlack.ttf"; path = "../assets/fonts/Geist-UltraBlack.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		B3309E9532514D6A8408308E /* Geist-Thin.ttf */ = {isa = PBXFileReference; name = "Geist-Thin.ttf"; path = "../assets/fonts/Geist-Thin.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		0EA8CC422BD74016A620EDF4 /* GeistMono-Thin.ttf */ = {isa = PBXFileReference; name = "GeistMono-Thin.ttf"; path = "../assets/fonts/GeistMono-Thin.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		0997B31C1DFC47568AA7A370 /* Geist-Regular.ttf */ = {isa = PBXFileReference; name = "Geist-Regular.ttf"; path = "../assets/fonts/Geist-Regular.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		0F4DFCE32E474A92AF82625F /* Geist-Medium.ttf */ = {isa = PBXFileReference; name = "Geist-Medium.ttf"; path = "../assets/fonts/Geist-Medium.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		B9CA47073E8B4086B00F0D39 /* GeistMono-UltraLight.ttf */ = {isa = PBXFileReference; name = "GeistMono-UltraLight.ttf"; path = "../assets/fonts/GeistMono-UltraLight.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		32A9B38B92434831A9E74A81 /* GeistMono-Regular.ttf */ = {isa = PBXFileReference; name = "GeistMono-Regular.ttf"; path = "../assets/fonts/GeistMono-Regular.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		2511AAB9988D447B9A71CB34 /* Geist-Light.ttf */ = {isa = PBXFileReference; name = "Geist-Light.ttf"; path = "../assets/fonts/Geist-Light.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		3337B909696841699E7E7018 /* GeistMono-SemiBold.ttf */ = {isa = PBXFileReference; name = "GeistMono-SemiBold.ttf"; path = "../assets/fonts/GeistMono-SemiBold.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		5FF6D74A6B6641F499742BB1 /* GeistMono-UltraBlack.ttf */ = {isa = PBXFileReference; name = "GeistMono-UltraBlack.ttf"; path = "../assets/fonts/GeistMono-UltraBlack.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		F65D3672F8E34AF4B0347272 /* GeistVF.ttf */ = {isa = PBXFileReference; name = "GeistVF.ttf"; path = "../assets/fonts/GeistVF.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		A0F8976D2A8248FBAC0F55F2 /* Geist-UltraLight.ttf */ = {isa = PBXFileReference; name = "Geist-UltraLight.ttf"; path = "../assets/fonts/Geist-UltraLight.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		310ABA008D8448ECBF220DA7 /* GeistMono-Medium.ttf */ = {isa = PBXFileReference; name = "GeistMono-Medium.ttf"; path = "../assets/fonts/GeistMono-Medium.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -74,6 +114,7 @@
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
 				BBD78D7AC51CEA395F1C20DB /* Pods */,
+				1308EFD755F74978AE978AA3 /* Resources */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -96,6 +137,34 @@
 			);
 			path = Pods;
 			sourceTree = "<group>";
+		};
+		1308EFD755F74978AE978AA3 /* Resources */ = {
+			isa = "PBXGroup";
+			children = (
+				E1C6AE7CF5FD44288F047A35 /* GeistMono-Light.ttf */,
+				60878B0D33B84C35B3028E1E /* GeistMono-Black.ttf */,
+				45B96EFBEB024586A48D846D /* GeistMonoVF.ttf */,
+				8EFF5243418C48D9B6F68DE7 /* Geist-Black.ttf */,
+				3983B91EB79B42B88025B9FD /* GeistMono-Bold.ttf */,
+				B63DDF1C3E924CEE9314093E /* Geist-SemiBold.ttf */,
+				9CF4E3EF8855436DAD20D021 /* Geist-Bold.ttf */,
+				C1F1A3EA1DA4429E9940F5EE /* Geist-UltraBlack.ttf */,
+				B3309E9532514D6A8408308E /* Geist-Thin.ttf */,
+				0EA8CC422BD74016A620EDF4 /* GeistMono-Thin.ttf */,
+				0997B31C1DFC47568AA7A370 /* Geist-Regular.ttf */,
+				0F4DFCE32E474A92AF82625F /* Geist-Medium.ttf */,
+				B9CA47073E8B4086B00F0D39 /* GeistMono-UltraLight.ttf */,
+				32A9B38B92434831A9E74A81 /* GeistMono-Regular.ttf */,
+				2511AAB9988D447B9A71CB34 /* Geist-Light.ttf */,
+				3337B909696841699E7E7018 /* GeistMono-SemiBold.ttf */,
+				5FF6D74A6B6641F499742BB1 /* GeistMono-UltraBlack.ttf */,
+				F65D3672F8E34AF4B0347272 /* GeistVF.ttf */,
+				A0F8976D2A8248FBAC0F55F2 /* Geist-UltraLight.ttf */,
+				310ABA008D8448ECBF220DA7 /* GeistMono-Medium.ttf */,
+			);
+			name = Resources;
+			sourceTree = "<group>";
+			path = "";
 		};
 /* End PBXGroup section */
 
@@ -159,6 +228,26 @@
 			files = (
 				81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
+				ED2425373C0A4FEB95B3B1F2 /* GeistMono-Light.ttf in Resources */,
+				9F7777502FB24FEABBCB7E2C /* GeistMono-Black.ttf in Resources */,
+				CF49E5169DB54B359211B5D6 /* GeistMonoVF.ttf in Resources */,
+				BC6911079ED34B99A75B6646 /* Geist-Black.ttf in Resources */,
+				234E7FF54EC6417DBDECAC0E /* GeistMono-Bold.ttf in Resources */,
+				7DB04B4A74704C6CB88A3479 /* Geist-SemiBold.ttf in Resources */,
+				51F5457A923A403F9540E1F3 /* Geist-Bold.ttf in Resources */,
+				FBA10502746A4AAF8E6EDC78 /* Geist-UltraBlack.ttf in Resources */,
+				3EB8BAE2C98E4E0DBFD48FE6 /* Geist-Thin.ttf in Resources */,
+				644B046D741240ADB9D8BD77 /* GeistMono-Thin.ttf in Resources */,
+				6FABD1F2748F45F0A52D8808 /* Geist-Regular.ttf in Resources */,
+				AEF4387F128843519B9125F5 /* Geist-Medium.ttf in Resources */,
+				87F459068331452AB0B678EF /* GeistMono-UltraLight.ttf in Resources */,
+				AB5FD7612A5D4B62906E613D /* GeistMono-Regular.ttf in Resources */,
+				A860F6F202B04533A7B589BB /* Geist-Light.ttf in Resources */,
+				E7DFA50EC1FF410BBDB58052 /* GeistMono-SemiBold.ttf in Resources */,
+				601941795D6147209BB5B534 /* GeistMono-UltraBlack.ttf in Resources */,
+				2DA77DB2126142DA8B13A94D /* GeistVF.ttf in Resources */,
+				48CEC743E38744E299ED047B /* Geist-UltraLight.ttf in Resources */,
+				C0754A72925D44179444EC39 /* GeistMono-Medium.ttf in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
