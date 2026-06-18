@@ -4,7 +4,7 @@ import type { PrintSettings } from '../types';
 // The API runs locally — change this to your machine's local IP
 // when running on a physical device (localhost doesn't work from device).
 // For emulator, 10.0.2.2 maps to host machine's localhost.
-const API_BASE_URL = 'https://tar-disclosure-villa-favor.trycloudflare.com';
+const API_BASE_URL = 'https://thinkpad.aditya.stream';
 
 // ── Settings mapping (App → API/IPP) ───────────────────────────────
 
