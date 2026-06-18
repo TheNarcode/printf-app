@@ -1,7 +1,9 @@
 import {useCallback} from 'react';
 import {Platform} from 'react-native';
 import type {UploadedFile} from '../types';
-import {estimatePageCount, generateId} from '../utils/formatters';
+import {generateId} from '../utils/formatters';
+import {PDFDocument} from 'pdf-lib';
+import ReactNativeBlobUtil from 'react-native-blob-util';
 
 interface DocumentPickerResponse {
   uri: string;
@@ -11,8 +13,34 @@ interface DocumentPickerResponse {
 }
 
 /**
+ * Read a PDF file and return the actual page count.
+ * Falls back to 1 if parsing fails.
+ */
+async function getActualPageCount(uri: string, fileType: string): Promise<number> {
+  // Images are always 1 page
+  if (fileType.includes('image')) {
+    return 1;
+  }
+
+  // Only parse PDFs
+  if (!fileType.includes('pdf')) {
+    return 1;
+  }
+
+  try {
+    const filePath = uri.replace('file://', '');
+    const base64 = await ReactNativeBlobUtil.fs.readFile(filePath, 'base64');
+    const bytes = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+    const pdfDoc = await PDFDocument.load(bytes, {ignoreEncryption: true});
+    return pdfDoc.getPageCount();
+  } catch (err) {
+    console.warn('Failed to parse PDF for page count:', err);
+    return 1;
+  }
+}
+
+/**
  * Hook for handling document picking using react-native-document-picker.
- * Falls back to mock files if the picker is not available.
  */
 export function useFileUpload() {
   const pickFiles = useCallback(async (): Promise<UploadedFile[]> => {
@@ -29,54 +57,34 @@ export function useFileUpload() {
         copyTo: Platform.OS === 'android' ? 'cachesDirectory' : undefined,
       });
 
-      return results.map(doc => ({
-        id: generateId(),
-        name: doc.name || 'Untitled',
-        uri: doc.uri,
-        size: doc.size || 0,
-        type: doc.type || 'application/octet-stream',
-        pages: estimatePageCount(doc.size || 0, doc.type || ''),
-      }));
+      // Parse each file to get accurate page count
+      const files: UploadedFile[] = [];
+      for (const doc of results) {
+        const pages = await getActualPageCount(
+          doc.uri,
+          doc.type || '',
+        );
+        files.push({
+          id: generateId(),
+          name: doc.name || 'Untitled',
+          uri: doc.uri,
+          size: doc.size || 0,
+          type: doc.type || 'application/octet-stream',
+          pages,
+        });
+      }
+
+      return files;
     } catch (err: any) {
-      // User cancelled or picker not available
+      // User cancelled
       if (err?.code === 'DOCUMENT_PICKER_CANCELED') {
         return [];
       }
-
-      // Fallback: return mock files for demo
-      console.log('Document picker not available, using mock files');
-      return getMockFiles();
+      console.error('File picker error:', err);
+      return [];
     }
   }, []);
 
   return {pickFiles};
 }
 
-function getMockFiles(): UploadedFile[] {
-  return [
-    {
-      id: generateId(),
-      name: 'project_report.pdf',
-      uri: 'file:///mock/project_report.pdf',
-      size: 662016, // ~646.5 KB
-      type: 'application/pdf',
-      pages: 8,
-    },
-    {
-      id: generateId(),
-      name: 'invoice_march.pdf',
-      uri: 'file:///mock/invoice_march.pdf',
-      size: 245760,
-      type: 'application/pdf',
-      pages: 4,
-    },
-    {
-      id: generateId(),
-      name: 'resume_final.pdf',
-      uri: 'file:///mock/resume_final.pdf',
-      size: 102400,
-      type: 'application/pdf',
-      pages: 1,
-    },
-  ];
-}

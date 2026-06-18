@@ -1,5 +1,5 @@
 import React, {useCallback} from 'react';
-import {Alert, ScrollView, StyleSheet, TouchableOpacity, View} from 'react-native';
+import {Alert, Image, ScrollView, StyleSheet, TouchableOpacity, View} from 'react-native';
 import {LogOut, Moon, Sun, Monitor} from 'lucide-react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useTheme} from '../theme/ThemeContext';
@@ -50,7 +50,11 @@ export default function ProfileScreen({navigation}: Props) {
         <View style={[styles.profileCard, {backgroundColor: colors.card, borderColor: colors.border}]}>
           <View style={styles.profileRow}>
             <View style={[styles.avatar, {backgroundColor: colors.surface}]}>
-              <Text style={[styles.avatarText, {color: colors.text}]}>{initial}</Text>
+              {user?.photo ? (
+                <Image source={{uri: user.photo}} style={styles.avatarImage} />
+              ) : (
+                <Text style={[styles.avatarText, {color: colors.text}]}>{initial}</Text>
+              )}
             </View>
             <View style={styles.profileInfo}>
               <Text style={[styles.userName, {color: colors.text}]}>{user?.name || 'User'}</Text>
@@ -115,9 +119,10 @@ const styles = StyleSheet.create({
   profileRow: {flexDirection: 'row', alignItems: 'center', gap: scale(12)},
   avatar: {
     width: scale(48), height: scale(48), borderRadius: scale(24),
-    justifyContent: 'center', alignItems: 'center',
+    justifyContent: 'center', alignItems: 'center', overflow: 'hidden',
   },
   avatarText: {fontSize: moderateScale(20), fontFamily: 'Geist-Bold'},
+  avatarImage: {width: '100%', height: '100%'},
   profileInfo: {flex: 1},
   userName: {fontSize: moderateScale(17), fontFamily: 'Geist-Bold', marginBottom: 2},
   userEmail: {fontSize: moderateScale(12)},

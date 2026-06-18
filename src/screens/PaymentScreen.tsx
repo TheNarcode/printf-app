@@ -1,13 +1,17 @@
 import React, {useCallback, useMemo, useState} from 'react';
-import {ActivityIndicator, ScrollView, StyleSheet, TouchableOpacity, View} from 'react-native';
+import {ActivityIndicator, Alert, ScrollView, StyleSheet, TouchableOpacity, View} from 'react-native';
 import {Lock, FileText} from 'lucide-react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useTheme} from '../theme/ThemeContext';
 import {usePrintJob} from '../context/PrintJobContext';
+import {useAuth} from '../context/AuthContext';
 import Header from '../components/Header';
 import {formatCurrency, formatFileSize} from '../utils/formatters';
 import {Text} from '../components/Text';
 import {scale, moderateScale} from '../utils/responsive';
+import {uploadFile, createOrder, buildPrintConfig} from '../services/api';
+
+const RAZORPAY_KEY = 'rzp_test_StI0D1pMPdbae3';
 
 interface Props {
   navigation: any;
@@ -16,8 +20,10 @@ interface Props {
 export default function PaymentScreen({navigation}: Props) {
   const {colors} = useTheme();
   const insets = useSafeAreaInsets();
-  const {getOrderSummary, createOrder} = usePrintJob();
+  const {getOrderSummary, createOrder: createLocalOrder, refreshOrders, resetFlow} = usePrintJob();
+  const {idToken, user} = useAuth();
   const [isPaying, setIsPaying] = useState(false);
+  const [statusText, setStatusText] = useState('');
 
   const {items, fee, total} = useMemo(() => {
     const summary = getOrderSummary();
@@ -29,38 +35,81 @@ export default function PaymentScreen({navigation}: Props) {
   const handlePay = useCallback(async () => {
     setIsPaying(true);
     try {
-      try {
-        const RazorpaySDK = require('react-native-razorpay').default;
-        const options = {
-          description: 'printf - Print Order',
-          currency: 'INR',
-          key: 'YOUR_RAZORPAY_KEY',
-          amount: Math.round(total * 100),
-          name: 'printf',
-          theme: {color: '#18181B'},
-        };
-        await RazorpaySDK.open(options);
-      } catch (_e) {
-        // Razorpay not available, simulate payment
-        await new Promise<void>(r => setTimeout(r, 1500));
+      // Step 1: Upload all files to the API
+      setStatusText('Uploading files...');
+      const fileIds: Record<string, string> = {};
+      for (const item of items) {
+        const {fileId} = await uploadFile(
+          item.file.uri,
+          item.file.name,
+          item.file.type,
+          idToken,
+        );
+        fileIds[item.file.id] = fileId;
       }
-      const order = createOrder();
-      // CRITICAL: Reset the entire navigation stack so that 
-      // SettingsScreen/UploadScreen (which reference now-cleared files) 
-      // are unmounted BEFORE the RESET_FLOW dispatch re-renders them.
+
+      // Step 2: Build PrintConfig payloads
+      setStatusText('Creating order...');
+      const printConfigs = items.map(item =>
+        buildPrintConfig(
+          fileIds[item.file.id],
+          item.file.name,
+          item.file.type,
+          item.settings,
+        ),
+      );
+
+      // Step 3: Create order on API (returns Razorpay order)
+      const rpOrder = await createOrder(printConfigs, idToken);
+
+      // Step 4: Open Razorpay checkout
+      setStatusText('Opening payment...');
+      const RazorpaySDK = require('react-native-razorpay').default;
+      const options = {
+        description: 'printf - Print Order',
+        currency: rpOrder.currency || 'INR',
+        key: RAZORPAY_KEY,
+        amount: rpOrder.amount, // already in paise from API
+        name: 'printf',
+        order_id: rpOrder.id,
+        prefill: {
+          email: user?.email || '',
+          name: user?.name || '',
+        },
+        theme: {color: '#18181B'},
+      };
+
+      await RazorpaySDK.open(options);
+
+      // Step 5: Payment successful — navigate FIRST, then clean up
+      // Navigate immediately to prevent crash from state clearing
       navigation.reset({
         index: 0,
-        routes: [{name: 'OrderResult', params: {orderId: order.id, success: true}}],
+        routes: [{name: 'OrderResult', params: {success: true, orderId: rpOrder.localOrderId}}],
       });
-    } catch (err) {
-      navigation.reset({
-        index: 0,
-        routes: [{name: 'OrderResult', params: {success: false}}],
-      });
+
+      // Clean up and refresh in background (screen is already unmounted)
+      resetFlow();
+      refreshOrders().catch(() => {});
+    } catch (err: any) {
+      console.error('Payment flow error:', err);
+      // Check if user cancelled Razorpay
+      if (err?.code === 2 || err?.description?.includes('cancelled')) {
+        setStatusText('');
+        Alert.alert('Cancelled', 'Payment was cancelled.');
+      } else {
+        // Navigate to failure screen first, then clean up
+        navigation.reset({
+          index: 0,
+          routes: [{name: 'OrderResult', params: {success: false}}],
+        });
+        resetFlow();
+      }
     } finally {
       setIsPaying(false);
+      setStatusText('');
     }
-  }, [total, createOrder, navigation]);
+  }, [items, idToken, user, refreshOrders, resetFlow, navigation]);
 
   return (
     <View style={[styles.container, {backgroundColor: colors.background}]}>
@@ -150,7 +199,10 @@ export default function PaymentScreen({navigation}: Props) {
           activeOpacity={0.8}
           style={[styles.payBtn, {backgroundColor: colors.primary}, isPaying && {opacity: 0.7}]}>
           {isPaying ? (
-            <ActivityIndicator size="small" color={colors.background} />
+            <View style={styles.payingRow}>
+              <ActivityIndicator size="small" color={colors.background} />
+              {statusText ? <Text style={[styles.payBtnText, {color: colors.background, marginLeft: scale(8)}]}>{statusText}</Text> : null}
+            </View>
           ) : (
             <Text style={[styles.payBtnText, {color: colors.background}]}>Pay {formatCurrency(total)}</Text>
           )}
@@ -204,6 +256,7 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center', minHeight: scale(48),
   },
   payBtnText: {fontSize: moderateScale(16), fontFamily: 'Geist-Bold'},
+  payingRow: {flexDirection: 'row', alignItems: 'center'},
   securedRow: {flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: scale(4)},
   securedText: {fontSize: moderateScale(10), fontFamily: 'Geist-Regular'},
 });

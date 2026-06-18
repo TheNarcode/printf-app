@@ -16,8 +16,11 @@ interface Props {
 }
 
 export default function OrderDetailScreen({navigation, route}: Props) {
-  const {colors} = useTheme();
+  const {colors, isDark} = useTheme();
   const insets = useSafeAreaInsets();
+  
+  const screenBg = isDark ? colors.background : '#E5E7EB';
+  const slipBg = isDark ? '#27272A' : '#FFFFFF';
   const {orders} = usePrintJob();
 
   const order = useMemo(
@@ -29,7 +32,7 @@ export default function OrderDetailScreen({navigation, route}: Props) {
 
   if (!order) {
     return (
-      <View style={[styles.container, {backgroundColor: colors.background}]}>
+      <View style={[styles.container, {backgroundColor: screenBg}]}>
         <Header title="Order Details" showBack onBack={handleBack} />
         <View style={styles.emptyState}>
           <Text style={[styles.emptyText, {color: colors.textMuted}]}>Order not found</Text>
@@ -58,7 +61,7 @@ export default function OrderDetailScreen({navigation, route}: Props) {
   }, [colors.text]);
 
   return (
-    <View style={[styles.container, {backgroundColor: colors.background}]}>
+    <View style={[styles.container, {backgroundColor: screenBg}]}>
       <Header title="Order Details" showBack onBack={handleBack} />
 
       <ScrollView
@@ -70,19 +73,19 @@ export default function OrderDetailScreen({navigation, route}: Props) {
           {/* Top Jagged Edge */}
           <View style={styles.jaggedEdgeTop}>
             {Array.from({length: 80}).map((_, i) => (
-              <View key={i} style={[styles.triangleUp, {borderBottomColor: colors.card}]} />
+              <View key={i} style={[styles.triangleUp, {borderBottomColor: slipBg}]} />
             ))}
           </View>
           
-          <View style={[styles.receiptBody, {backgroundColor: colors.card}]}>
+          <View style={[styles.receiptBody, {backgroundColor: slipBg}]}>
             {/* Header */}
             <View style={styles.receiptHeader}>
               <View style={[styles.logoBox, {backgroundColor: colors.primaryBg}]}>
                 <Printer size={moderateScale(20)} color={colors.primary} strokeWidth={2} />
               </View>
               <Text style={[styles.storeName, {color: colors.primary}]}>printf</Text>
-              <Text style={[styles.monoText, {color: colors.textSecondary}]}>123 Printing Ave, Suite 100</Text>
-              <Text style={[styles.monoText, {color: colors.textSecondary}]}>San Francisco, CA 94103</Text>
+              <Text style={[styles.monoText, {color: colors.textSecondary}]}>St. Francis Institute of Technology</Text>
+              <Text style={[styles.monoText, {color: colors.textSecondary}]}>Borivali</Text>
               <Text style={[styles.monoText, {color: colors.textSecondary}]}>Store #{order.printerNumber.padStart(4, '0')}</Text>
             </View>
 
@@ -95,6 +98,7 @@ export default function OrderDetailScreen({navigation, route}: Props) {
               </View>
               <Text style={[styles.orderRef, {color: colors.text}]}>ORDER {order.orderRef}</Text>
               <Text style={[styles.monoText, {color: colors.textSecondary}]}>Placed: {formatDateTime(order.createdAt)}</Text>
+              <Text style={[styles.monoText, {color: colors.textSecondary}]}>Files: {order.files.length}</Text>
               
               <View style={[
                 styles.statusPill, 
@@ -113,24 +117,31 @@ export default function OrderDetailScreen({navigation, route}: Props) {
             <View style={styles.itemsSection}>
               {order.files.map((f) => (
                 <View key={f.file.id} style={styles.itemBlock}>
-                  <Text style={[styles.fileName, {color: colors.text}]}>{f.file.name}</Text>
-                  
                   <View style={styles.itemRow}>
-                    <Text style={[styles.itemDetail, {color: colors.textSecondary}]}>{f.settings.copies}x {f.settings.colorMode === 'color' ? 'Color' : 'B&W'} Copies</Text>
+                    <View style={{flexShrink: 1}}>
+                      <Text style={[styles.fileName, {color: colors.text, marginBottom: scale(2)}]} numberOfLines={1}>
+                        {f.file.name}
+                      </Text>
+                    </View>
                     <Text style={[styles.dots, {color: colors.border}]} numberOfLines={1}> ....................................... </Text>
-                    <Text style={[styles.itemPrice, {color: colors.textSecondary}]}>{formatCurrency(f.price)}</Text>
+                    <Text style={[styles.itemPrice, {color: colors.text}]}>{formatCurrency(f.price)}</Text>
                   </View>
                   
-                  <View style={styles.itemRow}>
-                    <Text style={[styles.itemDetail, {color: colors.textSecondary}]}>Paper: {f.settings.paperSize.toUpperCase()}</Text>
-                    <Text style={[styles.dots, {color: colors.border}]} numberOfLines={1}> ....................................... </Text>
-                    <Text style={[styles.itemPrice, {color: colors.textSecondary}]}>{formatCurrency(0)}</Text>
-                  </View>
-
-                  <View style={styles.itemRow}>
-                    <Text style={[styles.itemDetail, {color: colors.textSecondary}]}>Sides: {f.settings.sides === 'single' ? 'Single' : f.settings.sides === 'double-long' ? 'Dbl (Long)' : 'Dbl (Short)'}</Text>
-                    <Text style={[styles.dots, {color: colors.border}]} numberOfLines={1}> ....................................... </Text>
-                    <Text style={[styles.itemPrice, {color: colors.textSecondary}]}>{formatCurrency(0)}</Text>
+                  <View style={styles.detailsBox}>
+                    <Text style={[styles.itemDetail, {color: colors.textSecondary}]}>
+                      - {f.file.pages} {f.file.pages === 1 ? 'Page' : 'Pages'} × {f.settings.copies} {f.settings.copies === 1 ? 'Copy' : 'Copies'}
+                    </Text>
+                    <Text style={[styles.itemDetail, {color: colors.textSecondary}]}>
+                      - {f.settings.colorMode === 'color' ? 'Color' : 'B&W'} · {f.settings.paperSize.toUpperCase()} · {f.settings.sides === 'single' ? 'Single Sided' : f.settings.sides === 'double-long' ? 'Double Sided (Long)' : 'Double Sided (Short)'}
+                    </Text>
+                    <Text style={[styles.itemDetail, {color: colors.textSecondary}]}>
+                      - {f.settings.pagesPerSheet} Pages per Sheet · {f.settings.orientation === 'portrait' ? 'Portrait' : 'Landscape'}
+                    </Text>
+                    {f.settings.pageRange !== 'all' && (
+                      <Text style={[styles.itemDetail, {color: colors.textSecondary}]}>
+                        - Pages: {f.settings.pageRange}
+                      </Text>
+                    )}
                   </View>
                 </View>
               ))}
@@ -172,7 +183,7 @@ export default function OrderDetailScreen({navigation, route}: Props) {
           {/* Bottom Jagged Edge */}
           <View style={styles.jaggedEdgeBottom}>
             {Array.from({length: 80}).map((_, i) => (
-              <View key={i} style={[styles.triangleDown, {borderTopColor: colors.card}]} />
+              <View key={i} style={[styles.triangleDown, {borderTopColor: slipBg}]} />
             ))}
           </View>
         </View>
@@ -231,11 +242,12 @@ const styles = StyleSheet.create({
   // Items
   itemsSection: {marginBottom: scale(8)},
   itemBlock: {marginBottom: scale(10)},
-  fileName: {fontFamily: 'GeistMono-Bold', fontSize: moderateScale(10), marginBottom: scale(5)},
+  fileName: {fontFamily: 'GeistMono-Bold', fontSize: moderateScale(10)},
   itemRow: {flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: scale(3)},
-  itemDetail: {fontFamily: 'GeistMono-Regular', fontSize: moderateScale(10)},
+  detailsBox: {paddingLeft: scale(4), marginTop: scale(2)},
+  itemDetail: {fontFamily: 'GeistMono-Regular', fontSize: moderateScale(9), marginBottom: scale(2)},
   dots: {flex: 1, fontFamily: 'GeistMono-Regular', fontSize: moderateScale(10), letterSpacing: 2, marginHorizontal: scale(4), overflow: 'hidden'},
-  itemPrice: {fontFamily: 'GeistMono-Regular', fontSize: moderateScale(10)},
+  itemPrice: {fontFamily: 'GeistMono-Bold', fontSize: moderateScale(10)},
 
   // Totals
   totalsSection: {marginVertical: scale(8)},

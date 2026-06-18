@@ -1,6 +1,6 @@
 import React, {useCallback, useEffect, useRef} from 'react';
 import {Animated, Easing, StyleSheet, TouchableOpacity, View} from 'react-native';
-import {CheckCircle, XCircle} from 'lucide-react-native';
+import {CircleCheck, XCircle} from 'lucide-react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useTheme} from '../theme/ThemeContext';
 import {usePrintJob} from '../context/PrintJobContext';
@@ -58,7 +58,7 @@ export default function OrderResultScreen({navigation, route}: Props) {
         <Animated.View style={[styles.iconContainer, {transform: [{scale: scaleAnim}]}]}>
           <View style={[styles.iconCircle, {backgroundColor: success ? colors.successBg : colors.dangerBg}]}>
             {success ? (
-              <CheckCircle size={moderateScale(48)} color={colors.success} strokeWidth={1.5} />
+              <CircleCheck size={moderateScale(48)} color={colors.success} strokeWidth={1.5} />
             ) : (
               <XCircle size={moderateScale(48)} color={colors.danger} strokeWidth={1.5} />
             )}

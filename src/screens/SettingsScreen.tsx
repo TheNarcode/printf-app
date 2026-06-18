@@ -1,29 +1,43 @@
-import React, {useCallback, useState} from 'react';
-import {Dimensions, Image, Modal, ScrollView, StyleSheet, TouchableOpacity, View, TextInput, FlatList} from 'react-native';
-import {ChevronDown, Minus, Plus, FileText, CheckCircle2, Info} from 'lucide-react-native';
+import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
+import {
+  ActivityIndicator,
+  Dimensions,
+  FlatList,
+  Image,
+  Modal,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+  TextInput,
+} from 'react-native';
+import {
+  ChevronLeft,
+  ChevronRight,
+  Minus,
+  Plus,
+  FileText,
+  Info,
+  X,
+  Maximize2,
+} from 'lucide-react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useTheme} from '../theme/ThemeContext';
 import {usePrintJob} from '../context/PrintJobContext';
 import Header from '../components/Header';
 import {Text} from '../components/Text';
 import {formatFileSize} from '../utils/formatters';
-import {getSafePreviewUri} from '../utils/pdfModifier';
-import {scale, moderateScale, SCREEN_WIDTH} from '../utils/responsive';
+import {
+  parsePageRange,
+  getSheetPages,
+  getTotalSheets,
+  generatePdfThumbnails,
+} from '../utils/previewUtils';
+import {scale, moderateScale, verticalScale, SCREEN_WIDTH, SCREEN_HEIGHT} from '../utils/responsive';
 
-let PdfView: any = null;
-try {
-  PdfView = require('react-native-pdf').default;
-} catch (_) {}
-
-interface Props {
-  navigation: any;
-}
-
-const PAPER_SIZES = [
-  {id: 'a4', label: 'A4'},
-  {id: 'a3', label: 'A3'},
-  {id: 'letter', label: 'Letter'},
-] as const;
+// ─── Constants ──────────────────────────────────────────────────────
+const A4_RATIO = 297 / 210; // 1.4142
 
 const SIDES_OPTIONS = [
   {id: 'single', label: 'Single Sided'},
@@ -33,14 +47,29 @@ const SIDES_OPTIONS = [
 
 const PAGES_PER_SHEET_OPTS = [1, 2, 4, 6, 9];
 
+// ─── Types ──────────────────────────────────────────────────────────
+interface Props {
+  navigation: any;
+}
+
+// ─── Component ──────────────────────────────────────────────────────
 export default function SettingsScreen({navigation}: Props) {
-  const {colors} = useTheme();
+  const {colors, isDark} = useTheme();
   const insets = useSafeAreaInsets();
   const {files, fileSettings, updateFileSettings} = usePrintJob();
+
   const [selectedIdx, setSelectedIdx] = useState(0);
-  const [showPaperModal, setShowPaperModal] = useState(false);
   const [showSidesModal, setShowSidesModal] = useState(false);
-  const [previewUri, setPreviewUri] = useState<string | null>(null);
+  const [showFullscreen, setShowFullscreen] = useState(false);
+
+  // Preview state
+  const [thumbnails, setThumbnails] = useState<Record<number, string>>({});
+  const [thumbLoading, setThumbLoading] = useState(false);
+  const [currentSheet, setCurrentSheet] = useState(0);
+
+  // Refs for sheet swiping
+  const inlineSheetListRef = useRef<FlatList>(null);
+  const fullscreenSheetListRef = useRef<FlatList>(null);
 
   const file = files[selectedIdx];
   const settings = file ? fileSettings[file.id] : null;
@@ -49,6 +78,7 @@ export default function SettingsScreen({navigation}: Props) {
 
   const isImage = file.type.includes('image');
   const isPdf = file.type.includes('pdf') || file.name.toLowerCase().endsWith('.pdf');
+  const isBW = settings.colorMode === 'bw';
 
   const handleBack = useCallback(() => navigation.goBack(), [navigation]);
   const handleContinue = useCallback(() => navigation.navigate('Payment'), [navigation]);
@@ -60,62 +90,182 @@ export default function SettingsScreen({navigation}: Props) {
     [file, updateFileSettings],
   );
 
-  React.useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      if (isImage) {
-        setPreviewUri(file.uri);
-      } else if (isPdf) {
-        const safeUri = await getSafePreviewUri(file.uri);
-        if (!cancelled) setPreviewUri(safeUri);
-      } else {
-        setPreviewUri(null);
-      }
-    })();
-    return () => { cancelled = true; };
-  }, [file.uri, file.id, isImage, isPdf]);
-
-  const isLandscape = settings.orientation === 'landscape';
-  const paperAspect = isLandscape ? 1.414 : 1 / 1.414;
-  const previewW = SCREEN_WIDTH - scale(40);
-  const previewH = previewW / paperAspect;
-  const maxPreviewH = scale(260);
-  const finalPreviewH = Math.min(previewH, maxPreviewH);
-  const finalPreviewW = finalPreviewH * paperAspect;
+  // ── Page range computation ────────────────────────────────────────
+  const selectedPages = useMemo(
+    () => parsePageRange(settings.pageRange, file.pages),
+    [settings.pageRange, file.pages],
+  );
 
   const pps = settings.pagesPerSheet;
+  const totalSheets = getTotalSheets(selectedPages, pps);
+
+  useEffect(() => {
+    setCurrentSheet(0);
+  }, [pps, settings.pageRange, file.id]);
+
+  // ── Generate PDF thumbnails ───────────────────────────────────────
+  useEffect(() => {
+    if (!isPdf) { setThumbnails({}); return; }
+    let cancelled = false;
+    setThumbLoading(true);
+    (async () => {
+      try {
+        const result = await generatePdfThumbnails(file.uri, selectedPages);
+        if (!cancelled) setThumbnails(result);
+      } catch (e) { console.warn('Thumbnail generation failed:', e); }
+      finally { if (!cancelled) setThumbLoading(false); }
+    })();
+    return () => { cancelled = true; };
+  }, [file.uri, file.id, isPdf, selectedPages]);
+
+  // ── Paper dimensions ──────────────────────────────────────────────
+  const isLandscape = settings.orientation === 'landscape';
+  const paperRatio = isLandscape ? 1 / A4_RATIO : A4_RATIO;
+  const containerW = SCREEN_WIDTH - scale(40);
+  const paperW = Math.min(containerW, scale(300));
+  const paperH = paperW * paperRatio;
+  const maxH = verticalScale(300);
+  const finalPaperH = Math.min(paperH, maxH);
+  const finalPaperW = finalPaperH / paperRatio;
+
   const gridCols = pps <= 2 ? pps : pps <= 4 ? 2 : 3;
   const gridRows = Math.ceil(pps / gridCols);
 
-  const renderFileCard = useCallback(({item}: {item: any}) => {
+  // Fullscreen dims
+  const fsMaxW = SCREEN_WIDTH - scale(32);
+  const fsMaxH = SCREEN_HEIGHT - insets.top - insets.bottom - scale(140);
+  let fsPaperW: number, fsPaperH: number;
+  if (fsMaxW * paperRatio <= fsMaxH) {
+    fsPaperW = fsMaxW;
+    fsPaperH = fsMaxW * paperRatio;
+  } else {
+    fsPaperH = fsMaxH;
+    fsPaperW = fsMaxH / paperRatio;
+  }
+
+  // ── Render a single page cell ─────────────────────────────────────
+  const renderPageCell = (pageIdx: number | undefined, cellIdx: number, pw: number, ph: number) => {
+    const cellW = pw / gridCols;
+    const cellH = ph / gridRows;
+    const pad = pps > 1 ? scale(1.5) : 0;
+
+    if (pageIdx === undefined) {
+      return (
+        <View key={`empty-${cellIdx}`} style={{width: cellW, height: cellH, padding: pad}}>
+          <View style={[styles.pageCell, {backgroundColor: '#fafafa'}]} />
+        </View>
+      );
+    }
+
+    const renderImage = (uri: string) => (
+      <Image source={{uri}} style={styles.pageCell} resizeMode="contain" />
+    );
+
+    if (isImage) {
+      return (
+        <View key={`img-${cellIdx}`} style={{width: cellW, height: cellH, padding: pad}}>
+          {renderImage(file.uri)}
+          {isBW && <View style={[StyleSheet.absoluteFill, {backgroundColor: '#000', mixBlendMode: 'color'} as any]} />}
+        </View>
+      );
+    }
+
+    const thumbUri = thumbnails[pageIdx];
+    if (thumbUri) {
+      return (
+        <View key={`thumb-${pageIdx}-${cellIdx}`} style={{width: cellW, height: cellH, padding: pad}}>
+          {renderImage(thumbUri)}
+          {isBW && <View style={[StyleSheet.absoluteFill, {backgroundColor: '#000', mixBlendMode: 'color'} as any]} />}
+        </View>
+      );
+    }
+
     return (
-      <View style={{width: SCREEN_WIDTH}}>
-        <View style={[styles.fileCard, {backgroundColor: colors.card, borderColor: colors.border}]}>
-          <View style={[styles.fileIconBox, {backgroundColor: colors.primaryBg}]}>
-            <FileText size={moderateScale(20)} color={colors.primary} strokeWidth={1.5} />
-          </View>
-          <View style={styles.fileCardInfo}>
-            <Text style={[styles.fileCardName, {color: colors.text}]} numberOfLines={1}>{item.name}</Text>
-            <Text style={[styles.fileCardMeta, {color: colors.textMuted}]}>
-              {formatFileSize(item.size)} · {item.pages} {item.pages === 1 ? 'page' : 'pages'}
-            </Text>
-          </View>
+      <View key={`loading-${cellIdx}`} style={{width: cellW, height: cellH, padding: pad}}>
+        <View style={[styles.pageCell, {backgroundColor: '#f8f8f8', justifyContent: 'center', alignItems: 'center'}]}>
+          {thumbLoading ? (
+            <ActivityIndicator size="small" color="#bbb" />
+          ) : (
+            <>
+              <FileText size={moderateScale(pps > 1 ? 10 : 18)} color="#ccc" strokeWidth={1} />
+              <Text style={{fontSize: moderateScale(7), color: '#bbb', marginTop: 2, fontFamily: 'GeistMono-Regular'}}>
+                Page {(pageIdx ?? 0) + 1}
+              </Text>
+            </>
+          )}
         </View>
       </View>
     );
-  }, [colors]);
+  };
+
+  // ── Render a single sheet (used in both inline & fullscreen FlatLists) ──
+  const renderSheet = (sheetIndex: number, pw: number, ph: number) => {
+    const pages = getSheetPages(selectedPages, pps, sheetIndex);
+    return (
+      <View style={[styles.paperSheet, {width: pw, height: ph}]}>
+        <View style={styles.ppsGrid}>
+          {Array.from({length: pps}).map((_, cellIdx) =>
+            renderPageCell(pages[cellIdx], cellIdx, pw, ph),
+          )}
+        </View>
+      </View>
+    );
+  };
+
+  // ── Sheet data for FlatList ───────────────────────────────────────
+  const sheetData = useMemo(
+    () => Array.from({length: totalSheets}, (_, i) => ({key: `sheet-${i}`, index: i})),
+    [totalSheets],
+  );
+
+  const onInlineSheetChange = useCallback(({viewableItems}: any) => {
+    if (viewableItems.length > 0) {
+      setCurrentSheet(viewableItems[0].item.index);
+    }
+  }, []);
+
+  const onFullscreenSheetChange = useCallback(({viewableItems}: any) => {
+    if (viewableItems.length > 0) {
+      setCurrentSheet(viewableItems[0].item.index);
+    }
+  }, []);
+
+  const goToSheet = useCallback((dir: 1 | -1) => {
+    const next = Math.max(0, Math.min(totalSheets - 1, currentSheet + dir));
+    setCurrentSheet(next);
+    inlineSheetListRef.current?.scrollToIndex({index: next, animated: true});
+    fullscreenSheetListRef.current?.scrollToIndex({index: next, animated: true});
+  }, [currentSheet, totalSheets]);
+
+  // ── File carousel ─────────────────────────────────────────────────
+  const renderFileCard = useCallback(({item}: {item: any}) => (
+    <View style={{width: SCREEN_WIDTH}}>
+      <View style={[styles.fileCard, {backgroundColor: colors.card, borderColor: colors.border}]}>
+        <View style={[styles.fileIconBox, {backgroundColor: colors.primaryBg}]}>
+          <FileText size={moderateScale(20)} color={colors.primary} strokeWidth={1.5} />
+        </View>
+        <View style={styles.fileCardInfo}>
+          <Text style={[styles.fileCardName, {color: colors.text}]} numberOfLines={1}>{item.name}</Text>
+          <Text style={[styles.fileCardMeta, {color: colors.textMuted}]}>
+            {formatFileSize(item.size)} · {item.pages} {item.pages === 1 ? 'page' : 'pages'}
+          </Text>
+        </View>
+      </View>
+    </View>
+  ), [colors]);
 
   const onViewableItemsChanged = useCallback(({viewableItems}: any) => {
     if (viewableItems.length > 0) setSelectedIdx(viewableItems[0].index);
   }, []);
 
+  // ── Sub-components ────────────────────────────────────────────────
   const CompactSeg = ({options, value, onChange}: {options: {id: any; label: string}[]; value: any; onChange: (v: any) => void}) => (
     <View style={[styles.compactSeg, {backgroundColor: colors.surface}]}>
       {options.map(opt => {
         const active = value === opt.id;
         return (
           <TouchableOpacity
-            key={opt.id}
+            key={String(opt.id)}
             onPress={() => onChange(opt.id)}
             style={[styles.compactSegBtn, active && [styles.compactSegBtnActive, {backgroundColor: colors.card}]]}>
             <Text style={[styles.compactSegText, {color: active ? colors.text : colors.textSecondary}, active && {fontFamily: 'Geist-SemiBold'}]}>
@@ -134,20 +284,24 @@ export default function SettingsScreen({navigation}: Props) {
     </View>
   );
 
+  // Inline sheet FlatList — use container width for clean snap
+  const inlineContainerW = SCREEN_WIDTH - scale(40); // matches previewSection paddingHorizontal
+  const inlineItemW = inlineContainerW - scale(24); // minus previewContainer padding
+
+  // ── MAIN RENDER ───────────────────────────────────────────────────
   return (
     <View style={[styles.container, {backgroundColor: colors.background}]}>
       <Header title="Print Settings" subtitle="Step 2 of 3" showBack onBack={handleBack} />
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-        
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.scrollContent, {paddingBottom: insets.bottom + scale(120)}]}>
+
         {/* File Carousel */}
         <View>
           <FlatList
             data={files}
             keyExtractor={f => f.id}
             renderItem={renderFileCard}
-            horizontal
-            pagingEnabled
+            horizontal pagingEnabled
             showsHorizontalScrollIndicator={false}
             onViewableItemsChanged={onViewableItemsChanged}
             viewabilityConfig={{viewAreaCoveragePercentThreshold: 50}}
@@ -155,88 +309,75 @@ export default function SettingsScreen({navigation}: Props) {
           {files.length > 1 && (
             <View style={styles.dotsRow}>
               {files.map((_, i) => (
-                <View
-                  key={i}
-                  style={[
-                    styles.dot,
-                    {backgroundColor: i === selectedIdx ? colors.primary : colors.border},
-                    i === selectedIdx && styles.dotActive,
-                  ]}
-                />
+                <View key={i} style={[styles.dot, {backgroundColor: i === selectedIdx ? colors.primary : colors.border}, i === selectedIdx && styles.dotActive]} />
               ))}
             </View>
           )}
         </View>
 
-        {/* ─── LIVE PREVIEW PANE ─── */}
+        {/* ── LIVE PREVIEW ── */}
         <View style={styles.previewSection}>
           <View style={styles.previewHeader}>
             <Text style={[styles.sectionLabel, {color: colors.textMuted}]}>PRINT PREVIEW</Text>
-            {settings.colorMode === 'bw' && (
-              <View style={[styles.bwBadge, {backgroundColor: colors.surface, borderColor: colors.border}]}>
-                <Info size={moderateScale(10)} color={colors.textMuted} />
-                <Text style={[styles.bwBadgeText, {color: colors.textSecondary}]}>Preview in Color, Prints in B&W</Text>
-              </View>
-            )}
+            <View style={styles.previewHeaderRight}>
+              {isBW && (
+                <View style={[styles.bwBadge, {backgroundColor: colors.surface, borderColor: colors.border}]}>
+                  <Info size={moderateScale(10)} color={colors.textMuted} />
+                  <Text style={[styles.bwBadgeText, {color: colors.textSecondary}]}>B&W</Text>
+                </View>
+              )}
+              <TouchableOpacity onPress={() => setShowFullscreen(true)} hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
+                <Maximize2 size={moderateScale(14)} color={colors.textMuted} strokeWidth={2} />
+              </TouchableOpacity>
+            </View>
           </View>
-          
+
           <View style={[styles.previewContainer, {backgroundColor: colors.surface}]}>
-            <View style={[
-              styles.paperSheet,
-              {
-                width: finalPreviewW,
-                height: finalPreviewH,
-                backgroundColor: '#FFFFFF',
-              },
-            ]}>
-              <View style={[styles.ppsGrid, {flexDirection: 'row', flexWrap: 'wrap'}]}>
-                {Array.from({length: pps}).map((_, idx) => (
-                  <View
-                    key={idx}
-                    style={{
-                      width: `${100 / gridCols}%`,
-                      height: `${100 / gridRows}%`,
-                      padding: pps > 1 ? scale(2) : 0,
-                    }}>
-                    {previewUri && isImage ? (
-                      <Image
-                        source={{uri: previewUri}}
-                        style={[
-                          styles.previewImage,
-                          settings.colorMode === 'bw' && {opacity: 0.8, tintColor: '#888'},
-                        ]}
-                        resizeMode="contain"
-                      />
-                    ) : previewUri && isPdf && PdfView ? (
-                      <PdfView
-                        source={{uri: previewUri}}
-                        page={pps > 1 ? idx + 1 : 1}
-                        singlePage={pps > 1}
-                        horizontal={true}
-                        style={{flex: 1, backgroundColor: 'transparent'}}
-                      />
-                    ) : previewUri && isPdf ? (
-                      <View style={[styles.previewImage, {backgroundColor: '#f8f8f8', justifyContent: 'center', alignItems: 'center'}]}>
-                        <FileText size={moderateScale(pps > 1 ? 14 : 28)} color="#ccc" strokeWidth={1} />
-                      </View>
-                    ) : (
-                      <View style={[styles.previewImage, {backgroundColor: '#f8f8f8', justifyContent: 'center', alignItems: 'center'}]}>
-                        <ActivityIndicator size="small" color="#ccc" />
-                      </View>
-                    )}
-                  </View>
-                ))}
-              </View>
+            {/* Swipeable sheet list — one sheet at a time */}
+            <FlatList
+              ref={inlineSheetListRef}
+              data={sheetData}
+              keyExtractor={d => d.key}
+              horizontal
+              pagingEnabled
+              showsHorizontalScrollIndicator={false}
+              onViewableItemsChanged={onInlineSheetChange}
+              viewabilityConfig={{viewAreaCoveragePercentThreshold: 50}}
+              snapToInterval={inlineItemW}
+              decelerationRate="fast"
+              style={{width: inlineItemW}}
+              contentContainerStyle={{alignItems: 'center'}}
+              renderItem={({item}) => (
+                <View style={{width: inlineItemW, alignItems: 'center', justifyContent: 'center'}}>
+                  {renderSheet(item.index, finalPaperW, finalPaperH)}
+                </View>
+              )}
+            />
+
+            {/* Sheet info + arrows */}
+            <View style={styles.sheetNav}>
+              {totalSheets > 1 && (
+                <TouchableOpacity onPress={() => goToSheet(-1)} disabled={currentSheet === 0} style={[styles.sheetNavBtn, currentSheet === 0 && {opacity: 0.3}]}>
+                  <ChevronLeft size={moderateScale(16)} color={colors.textSecondary} strokeWidth={2} />
+                </TouchableOpacity>
+              )}
+              <Text style={[styles.sheetNavText, {color: colors.textMuted}]}>
+                {totalSheets > 1 ? `Sheet ${currentSheet + 1} of ${totalSheets} · ` : ''}{selectedPages.length} {selectedPages.length === 1 ? 'page' : 'pages'}
+              </Text>
+              {totalSheets > 1 && (
+                <TouchableOpacity onPress={() => goToSheet(1)} disabled={currentSheet === totalSheets - 1} style={[styles.sheetNavBtn, currentSheet === totalSheets - 1 && {opacity: 0.3}]}>
+                  <ChevronRight size={moderateScale(16)} color={colors.textSecondary} strokeWidth={2} />
+                </TouchableOpacity>
+              )}
             </View>
           </View>
         </View>
 
-        {/* ─── UNIFIED SETTINGS LIST ─── */}
+        {/* ── SETTINGS LIST ── */}
         <View style={styles.settingsSection}>
           <Text style={[styles.sectionLabel, {color: colors.textMuted, paddingHorizontal: scale(20)}]}>OPTIONS</Text>
-          
+
           <View style={[styles.settingsCard, {backgroundColor: colors.card, borderColor: colors.border}]}>
-            
             <SettingRow label="Copies">
               <View style={[styles.stepper, {borderColor: colors.border}]}>
                 <TouchableOpacity onPress={() => update('copies', Math.max(1, settings.copies - 1))} style={styles.stepBtn}>
@@ -267,7 +408,15 @@ export default function SettingsScreen({navigation}: Props) {
               />
             </SettingRow>
 
-            <SettingRow label="Pages Per Sheet">
+            <SettingRow label="Paper Size">
+              <CompactSeg
+                options={[{id: 'a4', label: 'A4'}, {id: 'a3', label: 'A3'}]}
+                value={settings.paperSize}
+                onChange={v => update('paperSize', v)}
+              />
+            </SettingRow>
+
+            <SettingRow label="Pages / Sheet">
               <CompactSeg
                 options={PAGES_PER_SHEET_OPTS.map(n => ({id: n, label: n.toString()}))}
                 value={settings.pagesPerSheet}
@@ -275,74 +424,99 @@ export default function SettingsScreen({navigation}: Props) {
               />
             </SettingRow>
 
-            <SettingRow label="Paper Size">
-              <TouchableOpacity onPress={() => setShowPaperModal(true)} style={[styles.dropdownRow, {backgroundColor: colors.surface, borderColor: colors.border}]}>
-                <Text style={[styles.dropdownValue, {color: colors.text}]} numberOfLines={1}>
-                  {PAPER_SIZES.find(p => p.id === settings.paperSize)?.label}
-                </Text>
-                <ChevronDown size={moderateScale(14)} color={colors.textMuted} strokeWidth={2} />
-              </TouchableOpacity>
-            </SettingRow>
-
-            <SettingRow label="Duplex / Sides">
+            <SettingRow label="Sides">
               <TouchableOpacity onPress={() => setShowSidesModal(true)} style={[styles.dropdownRow, {backgroundColor: colors.surface, borderColor: colors.border}]}>
                 <Text style={[styles.dropdownValue, {color: colors.text}]} numberOfLines={1}>
                   {SIDES_OPTIONS.find(p => p.id === settings.sides)?.label}
                 </Text>
-                <ChevronDown size={moderateScale(14)} color={colors.textMuted} strokeWidth={2} />
+                <ChevronRight size={moderateScale(14)} color={colors.textMuted} strokeWidth={2} />
               </TouchableOpacity>
             </SettingRow>
 
-            <SettingRow label="Page Range" isLast>
+            {/* Page Range — prominent section */}
+            <View style={[styles.pageRangeSection, {borderTopColor: colors.borderLight}]}>
+              <View style={styles.pageRangeHeader}>
+                <Text style={[styles.settingRowLabel, {color: colors.text}]}>Page Range</Text>
+                <Text style={[styles.pageRangeHint, {color: colors.textMuted}]}>
+                  {file.pages} pages total
+                </Text>
+              </View>
               <TextInput
-                style={[styles.input, {color: colors.text, borderColor: colors.border, backgroundColor: colors.surface}]}
-                placeholder="All (e.g. 1-5, 8)"
+                style={[styles.pageRangeInput, {color: colors.text, borderColor: colors.border, backgroundColor: colors.surface}]}
+                placeholder="All pages — or enter range like 1-5, 8, 11-13"
                 placeholderTextColor={colors.textMuted}
                 value={settings.pageRange === 'all' ? '' : settings.pageRange}
-                onChangeText={(text) => update('pageRange', text || 'all')}
+                onChangeText={text => update('pageRange', text || 'all')}
               />
-            </SettingRow>
-
+            </View>
           </View>
         </View>
       </ScrollView>
 
-      {/* Bottom bar */}
+      {/* ── Bottom bar ── */}
       <View style={[styles.bottomBar, {backgroundColor: colors.backgroundSecondary, borderTopColor: colors.border, paddingBottom: Math.max(insets.bottom, scale(16))}]}>
         <TouchableOpacity onPress={handleContinue} activeOpacity={0.8} style={[styles.continueBtn, {backgroundColor: colors.primary}]}>
           <Text style={[styles.continueBtnText, {color: colors.background}]}>Proceed to Payment</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Modals omitted for brevity - kept exactly the same logic */}
-      <Modal visible={showPaperModal} transparent animationType="fade">
-        <View style={styles.modalOverlay}>
-          <TouchableOpacity style={styles.modalBgClose} activeOpacity={1} onPress={() => setShowPaperModal(false)} />
-          <View style={[styles.actionSheet, {backgroundColor: colors.card, paddingBottom: insets.bottom + scale(20)}]}>
-            <View style={styles.sheetHeader}>
-              <Text style={[styles.sheetTitle, {color: colors.text}]}>Paper Size</Text>
-              <TouchableOpacity onPress={() => setShowPaperModal(false)}>
-                <X size={moderateScale(18)} color={colors.textMuted} />
-              </TouchableOpacity>
+      {/* ── FULLSCREEN PREVIEW MODAL ── */}
+      <Modal visible={showFullscreen} animationType="fade" statusBarTranslucent>
+        <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={colors.background} />
+        <View style={[styles.fsContainer, {backgroundColor: colors.background, paddingTop: insets.top}]}>
+          {/* Header — same style as app Header */}
+          <View style={[styles.fsHeader, {borderBottomColor: colors.border}]}>
+            <Text style={[styles.fsTitle, {color: colors.text}]}>Print Preview</Text>
+            <TouchableOpacity onPress={() => setShowFullscreen(false)} hitSlop={{top: 10, bottom: 10, left: 10, right: 10}} style={{padding: scale(4)}}>
+              <X size={moderateScale(20)} color={colors.textMuted} strokeWidth={2} />
+            </TouchableOpacity>
+          </View>
+
+          {/* Preview area — exact same pattern as inline */}
+          <View style={[styles.fsPreviewArea, {backgroundColor: colors.background}]}>
+            <FlatList
+              ref={fullscreenSheetListRef}
+              data={sheetData}
+              keyExtractor={d => d.key}
+              horizontal
+              pagingEnabled
+              showsHorizontalScrollIndicator={false}
+              onViewableItemsChanged={onFullscreenSheetChange}
+              viewabilityConfig={{viewAreaCoveragePercentThreshold: 50}}
+              snapToInterval={SCREEN_WIDTH}
+              decelerationRate="fast"
+              style={{width: SCREEN_WIDTH}}
+              contentContainerStyle={{alignItems: 'center'}}
+              renderItem={({item}) => (
+                <View style={{width: SCREEN_WIDTH, alignItems: 'center', justifyContent: 'center', paddingVertical: scale(20)}}>
+                  {renderSheet(item.index, fsPaperW, fsPaperH)}
+                </View>
+              )}
+            />
+          </View>
+
+          {/* Sheet nav — exact same as inline */}
+          <View style={[styles.fsNavBar, {backgroundColor: colors.background, borderTopColor: colors.border, paddingBottom: Math.max(insets.bottom, scale(12))}]}>
+            <View style={styles.sheetNav}>
+              {totalSheets > 1 && (
+                <TouchableOpacity onPress={() => goToSheet(-1)} disabled={currentSheet === 0} style={[styles.sheetNavBtn, currentSheet === 0 && {opacity: 0.3}]}>
+                  <ChevronLeft size={moderateScale(16)} color={colors.textSecondary} strokeWidth={2} />
+                </TouchableOpacity>
+              )}
+              <Text style={[styles.sheetNavText, {color: colors.textMuted}]}>
+                {totalSheets > 1 ? `Sheet ${currentSheet + 1} of ${totalSheets} · ` : ''}{selectedPages.length} {selectedPages.length === 1 ? 'page' : 'pages'}
+              </Text>
+              {totalSheets > 1 && (
+                <TouchableOpacity onPress={() => goToSheet(1)} disabled={currentSheet === totalSheets - 1} style={[styles.sheetNavBtn, currentSheet === totalSheets - 1 && {opacity: 0.3}]}>
+                  <ChevronRight size={moderateScale(16)} color={colors.textSecondary} strokeWidth={2} />
+                </TouchableOpacity>
+              )}
             </View>
-            {PAPER_SIZES.map((paper) => (
-              <TouchableOpacity
-                key={paper.id}
-                style={[styles.sheetOption, {borderBottomColor: colors.borderLight}]}
-                onPress={() => {
-                  update('paperSize', paper.id);
-                  setShowPaperModal(false);
-                }}>
-                <Text style={[styles.sheetOptionText, {color: colors.text}, settings.paperSize === paper.id && {fontFamily: 'Geist-SemiBold', color: colors.primary}]}>
-                  {paper.label}
-                </Text>
-                {settings.paperSize === paper.id && <CheckCircle2 size={moderateScale(16)} color={colors.primary} />}
-              </TouchableOpacity>
-            ))}
           </View>
         </View>
       </Modal>
 
+      {/* ── Sides Modal ── */}
       <Modal visible={showSidesModal} transparent animationType="fade">
         <View style={styles.modalOverlay}>
           <TouchableOpacity style={styles.modalBgClose} activeOpacity={1} onPress={() => setShowSidesModal(false)} />
@@ -353,20 +527,17 @@ export default function SettingsScreen({navigation}: Props) {
                 <X size={moderateScale(18)} color={colors.textMuted} />
               </TouchableOpacity>
             </View>
-            {SIDES_OPTIONS.map((opt) => (
-              <TouchableOpacity
-                key={opt.id}
-                style={[styles.sheetOption, {borderBottomColor: colors.borderLight}]}
-                onPress={() => {
-                  update('sides', opt.id);
-                  setShowSidesModal(false);
-                }}>
-                <Text style={[styles.sheetOptionText, {color: colors.text}, settings.sides === opt.id && {fontFamily: 'Geist-SemiBold', color: colors.primary}]}>
-                  {opt.label}
-                </Text>
-                {settings.sides === opt.id && <CheckCircle2 size={moderateScale(16)} color={colors.primary} />}
-              </TouchableOpacity>
-            ))}
+            {SIDES_OPTIONS.map(opt => {
+              const active = settings.sides === opt.id;
+              return (
+                <TouchableOpacity key={opt.id} style={[styles.sheetOption, {borderBottomColor: colors.borderLight}]} onPress={() => { update('sides', opt.id); setShowSidesModal(false); }}>
+                  <Text style={[styles.sheetOptionText, {color: colors.text}, active && {fontFamily: 'Geist-SemiBold', color: colors.primary}]}>
+                    {opt.label}
+                  </Text>
+                  {active && <View style={[styles.radioActive, {borderColor: colors.primary}]}><View style={[styles.radioDot, {backgroundColor: colors.primary}]} /></View>}
+                </TouchableOpacity>
+              );
+            })}
           </View>
         </View>
       </Modal>
@@ -374,15 +545,12 @@ export default function SettingsScreen({navigation}: Props) {
   );
 }
 
-const X = ({size, color}: any) => {
-  const LucideX = require('lucide-react-native').X;
-  return <LucideX size={size} color={color} />;
-}
-
+// ─── Styles ─────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
   container: {flex: 1},
   scrollContent: {paddingBottom: scale(32)},
 
+  // File carousel
   fileCard: {
     marginHorizontal: scale(20), marginTop: scale(12), marginBottom: scale(6),
     padding: scale(10), borderRadius: scale(12), borderWidth: 1,
@@ -396,63 +564,66 @@ const styles = StyleSheet.create({
   dot: {width: scale(5), height: scale(5), borderRadius: scale(3)},
   dotActive: {width: scale(12)},
 
-  previewSection: {paddingHorizontal: scale(20), marginBottom: scale(24)},
+  // Preview section
+  previewSection: {paddingHorizontal: scale(20), marginBottom: scale(20)},
   previewHeader: {flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: scale(8)},
+  previewHeaderRight: {flexDirection: 'row', alignItems: 'center', gap: scale(8)},
   sectionLabel: {fontSize: moderateScale(10), fontFamily: 'Geist-Bold', letterSpacing: 1, textTransform: 'uppercase'},
-  bwBadge: {flexDirection: 'row', alignItems: 'center', gap: scale(4), paddingHorizontal: scale(6), paddingVertical: scale(2), borderRadius: scale(4), borderWidth: 1},
+  bwBadge: {flexDirection: 'row', alignItems: 'center', gap: scale(3), paddingHorizontal: scale(6), paddingVertical: scale(2), borderRadius: scale(4), borderWidth: 1},
   bwBadgeText: {fontSize: moderateScale(9), fontFamily: 'Geist-Medium'},
-  
-  previewContainer: {
-    borderRadius: scale(12), padding: scale(16),
-    alignItems: 'center', justifyContent: 'center',
-  },
-  paperSheet: {
-    elevation: 4, shadowColor: '#000', shadowOffset: {width: 0, height: 2}, shadowOpacity: 0.12, shadowRadius: 6,
-    borderRadius: scale(3), overflow: 'hidden',
-  },
-  ppsGrid: {flex: 1},
-  previewImage: {flex: 1, width: '100%', height: '100%'},
 
+  previewContainer: {borderRadius: scale(12), padding: scale(12), alignItems: 'center'},
+  paperSheet: {
+    backgroundColor: '#FFFFFF',
+    elevation: 4, shadowColor: '#000', shadowOffset: {width: 0, height: 2}, shadowOpacity: 0.12, shadowRadius: 6,
+    borderRadius: scale(2), overflow: 'hidden',
+  },
+  ppsGrid: {flex: 1, flexDirection: 'row', flexWrap: 'wrap'},
+  pageCell: {flex: 1, width: '100%', height: '100%'},
+
+  sheetNav: {flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: scale(10), gap: scale(8)},
+  sheetNavBtn: {padding: scale(6)},
+  sheetNavText: {fontSize: moderateScale(10), fontFamily: 'GeistMono-Regular', letterSpacing: 0.3},
+
+  // Settings list
   settingsSection: {gap: scale(6)},
-  settingsCard: {
-    marginHorizontal: scale(20), borderRadius: scale(14), borderWidth: 1,
-  },
-  settingRow: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingVertical: scale(12), paddingHorizontal: scale(16),
-  },
+  settingsCard: {marginHorizontal: scale(20), borderRadius: scale(14), borderWidth: 1, overflow: 'hidden'},
+  settingRow: {flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: scale(12), paddingHorizontal: scale(16)},
   settingRowLabel: {fontSize: moderateScale(13), fontFamily: 'Geist-Medium'},
   settingRowControl: {flexDirection: 'row', alignItems: 'center'},
 
   compactSeg: {flexDirection: 'row', borderRadius: scale(6), padding: 2},
-  compactSegBtn: {paddingVertical: scale(6), paddingHorizontal: scale(12), alignItems: 'center', borderRadius: scale(4)},
+  compactSegBtn: {paddingVertical: scale(6), paddingHorizontal: scale(10), alignItems: 'center', borderRadius: scale(4)},
   compactSegBtnActive: {elevation: 1, shadowColor: '#000', shadowOffset: {width: 0, height: 1}, shadowOpacity: 0.08, shadowRadius: 2},
   compactSegText: {fontSize: moderateScale(11), fontFamily: 'Geist-Medium'},
 
-  dropdownRow: {
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    borderWidth: 1, borderRadius: scale(6), paddingHorizontal: scale(10), paddingVertical: scale(6),
-    minWidth: scale(100),
-  },
-  dropdownValue: {fontSize: moderateScale(12), fontFamily: 'Geist-Medium', flex: 1, marginRight: scale(8)},
+  dropdownRow: {flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderWidth: 1, borderRadius: scale(6), paddingHorizontal: scale(10), paddingVertical: scale(6), minWidth: scale(100)},
+  dropdownValue: {fontSize: moderateScale(12), fontFamily: 'Geist-Medium', flex: 1, marginRight: scale(6)},
 
   stepper: {flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderRadius: scale(6), overflow: 'hidden'},
   stepBtn: {paddingHorizontal: scale(10), paddingVertical: scale(6), alignItems: 'center'},
   stepValue: {paddingHorizontal: scale(12), paddingVertical: scale(6)},
   stepValueText: {fontSize: moderateScale(13), fontFamily: 'Geist-Bold'},
-  
-  input: {
-    borderWidth: 1, borderRadius: scale(6), paddingHorizontal: scale(10), paddingVertical: scale(6), 
-    fontSize: moderateScale(12), fontFamily: 'Geist-Medium', minWidth: scale(100), textAlign: 'right'
-  },
 
-  bottomBar: {
-    paddingHorizontal: scale(20), paddingTop: scale(14),
-    borderTopWidth: StyleSheet.hairlineWidth,
-  },
+  // Page Range
+  pageRangeSection: {borderTopWidth: StyleSheet.hairlineWidth, paddingVertical: scale(14), paddingHorizontal: scale(16)},
+  pageRangeHeader: {flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: scale(8)},
+  pageRangeHint: {fontSize: moderateScale(11), fontFamily: 'GeistMono-Regular'},
+  pageRangeInput: {borderWidth: 1, borderRadius: scale(8), paddingHorizontal: scale(14), paddingVertical: scale(12), fontSize: moderateScale(14), fontFamily: 'Geist-Medium'},
+
+  // Bottom bar
+  bottomBar: {paddingHorizontal: scale(20), paddingTop: scale(14), borderTopWidth: StyleSheet.hairlineWidth},
   continueBtn: {width: '100%', alignItems: 'center', justifyContent: 'center', paddingVertical: scale(13), borderRadius: scale(8)},
   continueBtnText: {fontSize: moderateScale(15), fontFamily: 'Geist-SemiBold'},
 
+  // Fullscreen
+  fsContainer: {flex: 1},
+  fsHeader: {flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: scale(20), paddingBottom: scale(10), borderBottomWidth: StyleSheet.hairlineWidth},
+  fsTitle: {fontSize: moderateScale(19), fontFamily: 'Geist-SemiBold'},
+  fsPreviewArea: {flex: 1, justifyContent: 'center', alignItems: 'center'},
+  fsNavBar: {paddingHorizontal: scale(20), paddingTop: scale(10), borderTopWidth: StyleSheet.hairlineWidth},
+
+  // Modals
   modalOverlay: {flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end'},
   modalBgClose: {flex: 1},
   actionSheet: {borderTopLeftRadius: scale(20), borderTopRightRadius: scale(20), paddingHorizontal: scale(20), paddingTop: scale(20)},
@@ -460,4 +631,6 @@ const styles = StyleSheet.create({
   sheetTitle: {fontSize: moderateScale(16), fontFamily: 'Geist-Bold'},
   sheetOption: {flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: scale(14), borderBottomWidth: StyleSheet.hairlineWidth},
   sheetOptionText: {fontSize: moderateScale(14), fontFamily: 'Geist-Medium'},
+  radioActive: {width: scale(20), height: scale(20), borderRadius: scale(10), borderWidth: 2, justifyContent: 'center', alignItems: 'center'},
+  radioDot: {width: scale(10), height: scale(10), borderRadius: scale(5)},
 });

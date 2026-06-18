@@ -1,6 +1,7 @@
-import React, {useCallback, useMemo} from 'react';
-import {FlatList, StyleSheet, TouchableOpacity, View} from 'react-native';
+import React, {useCallback, useMemo, useState} from 'react';
+import {FlatList, RefreshControl, StyleSheet, TouchableOpacity, View} from 'react-native';
 import {ChevronRight, ClipboardList, RefreshCcw, CheckCircle2, AlertCircle} from 'lucide-react-native';
+import {useFocusEffect} from '@react-navigation/native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useTheme} from '../theme/ThemeContext';
 import {usePrintJob} from '../context/PrintJobContext';
@@ -27,8 +28,26 @@ function getGreeting(): string {
 export default function HomeScreen({navigation}: Props) {
   const {colors} = useTheme();
   const insets = useSafeAreaInsets();
-  const {orders} = usePrintJob();
+  const {orders, refreshOrders, resetFlow} = usePrintJob();
   const {user} = useAuth();
+  const [refreshing, setRefreshing] = useState(false);
+
+  // Re-fetch orders from API every time the screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      refreshOrders();
+    }, [refreshOrders]),
+  );
+
+  // Pull-to-refresh handler
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await refreshOrders();
+    } finally {
+      setRefreshing(false);
+    }
+  }, [refreshOrders]);
 
   const recentOrders = orders.slice(0, 3);
 
@@ -40,7 +59,10 @@ export default function HomeScreen({navigation}: Props) {
   }), [orders]);
 
   const handleProfile = useCallback(() => navigation.navigate('Profile'), [navigation]);
-  const handleNewOrder = useCallback(() => navigation.navigate('Upload'), [navigation]);
+  const handleNewOrder = useCallback(() => {
+    resetFlow();
+    navigation.navigate('Upload');
+  }, [navigation, resetFlow]);
   const handleOrderPress = useCallback((order: Order) => navigation.navigate('OrderDetail', {orderId: order.id}), [navigation]);
   const handleViewAll = useCallback(() => navigation.navigate('AllOrders'), [navigation]);
   const handleStatPress = useCallback((filter: string) => navigation.navigate('AllOrders', {filter}), [navigation]);
@@ -63,7 +85,7 @@ export default function HomeScreen({navigation}: Props) {
     <View style={[styles.container, {backgroundColor: colors.background}]}>
       <Header
         showBrand
-        rightElement={<ProfileButton userName={user?.name} onPress={handleProfile} />}
+        rightElement={<ProfileButton userName={user?.name} userPhoto={user?.photo} onPress={handleProfile} />}
       />
 
       <FlatList
@@ -72,6 +94,15 @@ export default function HomeScreen({navigation}: Props) {
         renderItem={renderOrder}
         contentContainerStyle={[styles.listContent, {paddingBottom: insets.bottom + scale(100)}]}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            tintColor={colors.textMuted}
+            colors={[colors.primary]}
+            progressBackgroundColor={colors.card}
+          />
+        }
         ListHeaderComponent={
           <View style={styles.headerSection}>
             <Text style={[styles.greeting, {color: colors.text}]}>
@@ -109,6 +140,14 @@ export default function HomeScreen({navigation}: Props) {
             </View>
           </View>
         }
+        ListEmptyComponent={
+          <View style={styles.emptyState}>
+            <Text style={[styles.emptyStateTitle, {color: colors.text}]}>No orders yet</Text>
+            <Text style={[styles.emptyStateDesc, {color: colors.textMuted}]}>
+              Tap the + button to start printing.
+            </Text>
+          </View>
+        }
       />
 
       <FAB onPress={handleNewOrder} />
@@ -139,4 +178,19 @@ const styles = StyleSheet.create({
   sectionTitle: {fontSize: moderateScale(16), fontFamily: 'Geist-SemiBold'},
   viewAllBtn: {flexDirection: 'row', alignItems: 'center', gap: 2},
   viewAllText: {fontSize: moderateScale(12), fontFamily: 'Geist-Medium'},
+
+  emptyState: {
+    paddingVertical: scale(32),
+    alignItems: 'center',
+    gap: scale(6),
+  },
+  emptyStateTitle: {
+    fontSize: moderateScale(16),
+    fontFamily: 'Geist-SemiBold',
+  },
+  emptyStateDesc: {
+    fontSize: moderateScale(14),
+    fontFamily: 'Geist-Regular',
+  },
 });
+

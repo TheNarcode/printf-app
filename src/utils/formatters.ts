@@ -32,12 +32,12 @@ export function generateId(): string {
 export function calculateFilePrice(
   pages: number,
   colorMode: 'color' | 'bw',
-  paperSize: 'a4' | 'a3' | 'letter',
+  paperSize: 'a4' | 'a3',
   sides: 'single' | 'double-long' | 'double-short',
   copies: number = 1,
   pagesPerSheet: number = 1,
 ): number {
-  const base: Record<string, number> = {a4: 2, a3: 4, letter: 2.5};
+  const base: Record<string, number> = {a4: 2, a3: 4};
   const colorMul = colorMode === 'color' ? 1.5 : 1;
   const effectivePages = Math.ceil(pages / pagesPerSheet);
   const sheets = sides !== 'single' ? Math.ceil(effectivePages / 2) : effectivePages;
@@ -102,7 +102,7 @@ export function calculateSpending(
     start = new Date(now.getFullYear(), now.getMonth(), 1);
   }
   const filtered = orders.filter(
-    o => new Date(o.createdAt) >= start && o.status === 'completed',
+    o => new Date(o.createdAt) >= start && o.status !== 'failed',
   );
   return {
     totalSpent: filtered.reduce((s, o) => s + o.totalPrice, 0),

@@ -29,10 +29,6 @@ export default function UploadScreen({navigation}: Props) {
     if (picked.length > 0) addFiles(picked);
   }, [pickFiles, addFiles]);
 
-  const handleDrive = useCallback(() => {
-    Alert.alert('Coming Soon', 'Cloud upload will be available in a future update.');
-  }, []);
-
   const handleNext = useCallback(() => {
     if (files.length > 0) navigation.navigate('Settings');
   }, [files.length, navigation]);
@@ -52,7 +48,7 @@ export default function UploadScreen({navigation}: Props) {
 
       {!hasFiles ? (
         <View style={styles.centeredContent}>
-          <FileDropZone onBrowse={handleBrowse} onDrive={handleDrive} />
+          <FileDropZone onBrowse={handleBrowse} />
         </View>
       ) : (
         <FlatList
@@ -62,7 +58,7 @@ export default function UploadScreen({navigation}: Props) {
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
           ItemSeparatorComponent={() => <View style={{height: scale(8)}} />}
-          ListHeaderComponent={<FileDropZone onBrowse={handleBrowse} onDrive={handleDrive} />}
+          ListHeaderComponent={<FileDropZone onBrowse={handleBrowse} />}
           ListHeaderComponentStyle={{marginBottom: scale(20)}}
         />
       )}

@@ -9,7 +9,7 @@ export interface UploadedFile {
 
 export interface PrintSettings {
   colorMode: 'color' | 'bw';
-  paperSize: 'a4' | 'a3' | 'letter';
+  paperSize: 'a4' | 'a3';
   sides: 'single' | 'double-long' | 'double-short';
   copies: number;
   pageRange: string;

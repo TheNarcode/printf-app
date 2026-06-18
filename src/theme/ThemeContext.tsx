@@ -1,7 +1,8 @@
-import React, {createContext, useCallback, useContext, useMemo, useState} from 'react';
+import React, {createContext, useCallback, useContext, useEffect, useMemo, useState} from 'react';
 import {useColorScheme} from 'react-native';
 import {darkColors, lightColors, type ThemeColors} from './colors';
 import type {ThemeMode} from '../types';
+import {getStoredThemeMode, setStoredThemeMode} from '../services/storage';
 
 interface ThemeContextValue {
   colors: ThemeColors;
@@ -19,7 +20,15 @@ const ThemeContext = createContext<ThemeContextValue>({
 
 export function ThemeProvider({children}: {children: React.ReactNode}) {
   const systemScheme = useColorScheme();
-  const [mode, setMode] = useState<ThemeMode>('system');
+  const [mode, setModeState] = useState<ThemeMode>('system');
+
+  // Restore persisted theme on mount
+  useEffect(() => {
+    (async () => {
+      const stored = await getStoredThemeMode();
+      if (stored) setModeState(stored);
+    })();
+  }, []);
 
   const isDark = useMemo(() => {
     if (mode === 'system') return systemScheme === 'dark';
@@ -28,13 +37,14 @@ export function ThemeProvider({children}: {children: React.ReactNode}) {
 
   const colors = useMemo(() => (isDark ? darkColors : lightColors), [isDark]);
 
-  const handleSetMode = useCallback((newMode: ThemeMode) => {
-    setMode(newMode);
+  const setMode = useCallback((newMode: ThemeMode) => {
+    setModeState(newMode);
+    setStoredThemeMode(newMode); // fire-and-forget persist
   }, []);
 
   const value = useMemo(
-    () => ({colors, mode, isDark, setMode: handleSetMode}),
-    [colors, mode, isDark, handleSetMode],
+    () => ({colors, mode, isDark, setMode}),
+    [colors, mode, isDark, setMode],
   );
 
   return (

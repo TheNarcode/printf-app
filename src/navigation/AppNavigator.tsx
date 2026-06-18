@@ -1,4 +1,5 @@
 import React from 'react';
+import {View} from 'react-native';
 import {NavigationContainer, DefaultTheme, DarkTheme} from '@react-navigation/native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {useAuth} from '../context/AuthContext';
@@ -28,7 +29,7 @@ export type RootStackParamList = {
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function AppNavigator() {
-  const {isAuthenticated} = useAuth();
+  const {isAuthenticated, isLoading} = useAuth();
   const {isDark, colors} = useTheme();
 
   const navTheme = {
@@ -43,6 +44,13 @@ export default function AppNavigator() {
       notification: colors.primary,
     },
   };
+
+  if (isLoading) {
+    // Return an empty view while checking auth to prevent login flash
+    return (
+      <View style={{flex: 1, backgroundColor: colors.background}} />
+    );
+  }
 
   return (
     <NavigationContainer theme={navTheme}>

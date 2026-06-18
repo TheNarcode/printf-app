@@ -1,5 +1,5 @@
 import React, {useCallback, useMemo, useState} from 'react';
-import {FlatList, StyleSheet, TextInput, TouchableOpacity, View} from 'react-native';
+import {FlatList, RefreshControl, StyleSheet, TextInput, TouchableOpacity, View} from 'react-native';
 import {Search} from 'lucide-react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useTheme} from '../theme/ThemeContext';
@@ -27,7 +27,17 @@ const FILTERS: {key: Filter; label: string}[] = [
 export default function AllOrdersScreen({navigation, route}: Props) {
   const {colors} = useTheme();
   const insets = useSafeAreaInsets();
-  const {orders} = usePrintJob();
+  const {orders, refreshOrders} = usePrintJob();
+  const [refreshing, setRefreshing] = useState(false);
+
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await refreshOrders();
+    } finally {
+      setRefreshing(false);
+    }
+  }, [refreshOrders]);
 
   const initialFilter = useMemo(() => {
     const f = route?.params?.filter;
@@ -119,6 +129,15 @@ export default function AllOrdersScreen({navigation, route}: Props) {
         renderItem={renderOrder}
         contentContainerStyle={[styles.listContent, {paddingBottom: insets.bottom + scale(32)}]}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            tintColor={colors.textMuted}
+            colors={[colors.primary]}
+            progressBackgroundColor={colors.card}
+          />
+        }
         ItemSeparatorComponent={() => <View style={{height: scale(10)}} />}
         ListEmptyComponent={
           <View style={styles.emptyState}>

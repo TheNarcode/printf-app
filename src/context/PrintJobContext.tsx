@@ -1,11 +1,13 @@
-import React, {createContext, useCallback, useContext, useMemo, useReducer} from 'react';
+import React, {createContext, useCallback, useContext, useEffect, useMemo, useReducer} from 'react';
 import type {FileWithSettings, Order, PrintSettings, UploadedFile} from '../types';
 import {calculateConvenienceFee, calculateFilePrice, generateId, generateOrderRef} from '../utils/formatters';
-import {getMockOrders} from '../services/dummyApi';
+import {getStoredOrders, setStoredOrders} from '../services/storage';
+import {fetchOrders, apiOrderToAppOrder} from '../services/api';
+import {useAuth} from './AuthContext';
 
 const defaultSettings: PrintSettings = {
   colorMode: 'color',
-  paperSize: 'letter',
+  paperSize: 'a4',
   sides: 'single',
   copies: 1,
   pageRange: 'all',
@@ -17,6 +19,7 @@ interface State {
   files: UploadedFile[];
   fileSettings: Record<string, PrintSettings>;
   orders: Order[];
+  ordersLoaded: boolean;
 }
 
 type Action =
@@ -25,6 +28,7 @@ type Action =
   | {type: 'CLEAR_FILES'}
   | {type: 'UPDATE_SETTINGS'; payload: {fileId: string; settings: Partial<PrintSettings>}}
   | {type: 'ADD_ORDER'; payload: Order}
+  | {type: 'SET_ORDERS'; payload: Order[]}
   | {type: 'RESET_FLOW'};
 
 function reducer(state: State, action: Action): State {
@@ -50,8 +54,13 @@ function reducer(state: State, action: Action): State {
           [action.payload.fileId]: {...state.fileSettings[action.payload.fileId], ...action.payload.settings},
         },
       };
-    case 'ADD_ORDER':
-      return {...state, orders: [action.payload, ...state.orders]};
+    case 'ADD_ORDER': {
+      const newOrders = [action.payload, ...state.orders];
+      setStoredOrders(newOrders);
+      return {...state, orders: newOrders};
+    }
+    case 'SET_ORDERS':
+      return {...state, orders: action.payload, ordersLoaded: true};
     case 'RESET_FLOW':
       return {...state, files: [], fileSettings: {}};
     default:
@@ -70,17 +79,43 @@ interface ContextValue {
   getFilesWithSettings: () => FileWithSettings[];
   getOrderSummary: () => {items: FileWithSettings[]; subtotal: number; fee: number; total: number};
   createOrder: () => Order;
+  addOrder: (order: Order) => void;
+  refreshOrders: () => Promise<void>;
   resetFlow: () => void;
 }
 
 const PrintJobContext = createContext<ContextValue | null>(null);
 
 export function PrintJobProvider({children}: {children: React.ReactNode}) {
+  const {idToken, isAuthenticated} = useAuth();
   const [state, dispatch] = useReducer(reducer, {
     files: [],
     fileSettings: {},
-    orders: getMockOrders(),
+    orders: [],
+    ordersLoaded: false,
   });
+
+  // Load orders: try API first, fall back to local storage
+  const loadOrders = useCallback(async () => {
+    if (isAuthenticated && idToken) {
+      try {
+        const apiOrders = await fetchOrders(idToken);
+        const appOrders = apiOrders.map(apiOrderToAppOrder);
+        dispatch({type: 'SET_ORDERS', payload: appOrders});
+        setStoredOrders(appOrders); // cache locally
+        return;
+      } catch (err) {
+        console.warn('Failed to fetch orders from API, falling back to local:', err);
+      }
+    }
+    // Fallback: local storage
+    const stored = await getStoredOrders();
+    dispatch({type: 'SET_ORDERS', payload: stored});
+  }, [isAuthenticated, idToken]);
+
+  useEffect(() => {
+    loadOrders();
+  }, [loadOrders]);
 
   const addFiles = useCallback((files: UploadedFile[]) => dispatch({type: 'ADD_FILES', payload: files}), []);
   const removeFile = useCallback((id: string) => dispatch({type: 'REMOVE_FILE', payload: id}), []);
@@ -116,8 +151,8 @@ export function PrintJobProvider({children}: {children: React.ReactNode}) {
       totalPrice: total,
       convenienceFee: fee,
       status: 'pending',
-      printerNumber: String(Math.floor(Math.random() * 15) + 1).padStart(2, '0'),
-      printerName: 'Default Printer',
+      printerNumber: '--',
+      printerName: 'Assigned on print',
       totalPages,
       totalCopies,
       progress: 0,
@@ -128,14 +163,22 @@ export function PrintJobProvider({children}: {children: React.ReactNode}) {
     return order;
   }, [getOrderSummary]);
 
+  const addOrder = useCallback((order: Order) => {
+    dispatch({type: 'ADD_ORDER', payload: order});
+  }, []);
+
+  const refreshOrders = useCallback(async () => {
+    await loadOrders();
+  }, [loadOrders]);
+
   const value = useMemo(() => ({
     files: state.files,
     fileSettings: state.fileSettings,
     orders: state.orders,
     addFiles, removeFile, clearFiles, updateFileSettings,
-    getFilesWithSettings, getOrderSummary, createOrder, resetFlow,
+    getFilesWithSettings, getOrderSummary, createOrder, addOrder, refreshOrders, resetFlow,
   }), [state.files, state.fileSettings, state.orders, addFiles, removeFile, clearFiles,
-    updateFileSettings, getFilesWithSettings, getOrderSummary, createOrder, resetFlow]);
+    updateFileSettings, getFilesWithSettings, getOrderSummary, createOrder, addOrder, refreshOrders, resetFlow]);
 
   return <PrintJobContext.Provider value={value}>{children}</PrintJobContext.Provider>;
 }
@@ -145,3 +188,4 @@ export function usePrintJob(): ContextValue {
   if (!ctx) throw new Error('usePrintJob must be used within PrintJobProvider');
   return ctx;
 }
+

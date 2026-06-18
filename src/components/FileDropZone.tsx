@@ -3,15 +3,13 @@ import {StyleSheet, TouchableOpacity, View} from 'react-native';
 import {CloudUpload} from 'lucide-react-native';
 import {useTheme} from '../theme/ThemeContext';
 import {Text} from '../components/Text';
-import GoogleDriveLogo from '../components/GoogleDriveLogo';
 import {scale, moderateScale} from '../utils/responsive';
 
 interface FileDropZoneProps {
   onBrowse: () => void;
-  onDrive?: () => void;
 }
 
-const FileDropZone = memo(({onBrowse, onDrive}: FileDropZoneProps) => {
+const FileDropZone = memo(({onBrowse}: FileDropZoneProps) => {
   const {colors} = useTheme();
 
   return (
@@ -27,14 +25,6 @@ const FileDropZone = memo(({onBrowse, onDrive}: FileDropZoneProps) => {
         <Text style={[styles.subtitle, {color: colors.textMuted}]}>
           PDF, DOC, DOCX, JPG, PNG supported
         </Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        onPress={onDrive}
-        activeOpacity={0.7}
-        style={[styles.driveBtn, {borderColor: colors.border}]}>
-        <GoogleDriveLogo size={moderateScale(14)} color={colors.textMuted} />
-        <Text style={[styles.driveText, {color: colors.textSecondary}]}>Upload from Cloud</Text>
       </TouchableOpacity>
     </View>
   );
@@ -57,11 +47,6 @@ const styles = StyleSheet.create({
   },
   title: {fontSize: moderateScale(16), fontFamily: 'Geist-SemiBold'},
   subtitle: {fontSize: moderateScale(12), textAlign: 'center'},
-  driveBtn: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: scale(6),
-    paddingVertical: scale(6),
-  },
-  driveText: {fontSize: moderateScale(12), fontFamily: 'Geist-Medium', textDecorationLine: 'underline'},
 });
 
 export default FileDropZone;
