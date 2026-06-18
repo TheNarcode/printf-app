@@ -17,6 +17,7 @@ interface AuthContextValue {
   isLoading: boolean;
   signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
+  getValidToken: () => Promise<string | null>;
 }
 
 const AuthContext = createContext<AuthContextValue>({
@@ -26,6 +27,7 @@ const AuthContext = createContext<AuthContextValue>({
   isLoading: true, // Start true — we're checking storage
   signInWithGoogle: async () => {},
   signOut: async () => {},
+  getValidToken: async () => null,
 });
 
 export function AuthProvider({children}: {children: React.ReactNode}) {
@@ -93,6 +95,26 @@ export function AuthProvider({children}: {children: React.ReactNode}) {
     }
   }, []);
 
+  // ── Get Valid Token (Refreshes if expired) ──────────────────────
+  const getValidToken = useCallback(async (): Promise<string | null> => {
+    if (!user) return null;
+    try {
+      const {GoogleSignin} = require('@react-native-google-signin/google-signin');
+      const tokens = await GoogleSignin.getTokens();
+      const newToken = tokens.idToken;
+      
+      // Update state and storage if token has changed
+      if (newToken && newToken !== idToken) {
+        setIdToken(newToken);
+        await setStoredIdToken(newToken);
+      }
+      return newToken || idToken;
+    } catch (e) {
+      console.warn('Failed to refresh token:', e);
+      return idToken; // Fallback to current token, let the API reject it if invalid
+    }
+  }, [user, idToken]);
+
   // ── Sign out ────────────────────────────────────────────────────
   const signOut = useCallback(async () => {
     setIsLoading(true);
@@ -121,8 +143,9 @@ export function AuthProvider({children}: {children: React.ReactNode}) {
       isLoading,
       signInWithGoogle,
       signOut,
+      getValidToken,
     }),
-    [user, idToken, isLoading, signInWithGoogle, signOut],
+    [user, idToken, isLoading, signInWithGoogle, signOut, getValidToken],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

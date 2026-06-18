@@ -21,7 +21,7 @@ export default function PaymentScreen({navigation}: Props) {
   const {colors} = useTheme();
   const insets = useSafeAreaInsets();
   const {getOrderSummary, createOrder: createLocalOrder, refreshOrders, resetFlow} = usePrintJob();
-  const {idToken, user} = useAuth();
+  const {getValidToken, user} = useAuth();
   const [isPaying, setIsPaying] = useState(false);
   const [statusText, setStatusText] = useState('');
 
@@ -35,6 +35,9 @@ export default function PaymentScreen({navigation}: Props) {
   const handlePay = useCallback(async () => {
     setIsPaying(true);
     try {
+      const token = await getValidToken();
+      if (!token) throw new Error('Authentication required');
+
       // Step 1: Upload all files to the API
       setStatusText('Uploading files...');
       const fileIds: Record<string, string> = {};
@@ -43,7 +46,7 @@ export default function PaymentScreen({navigation}: Props) {
           item.file.uri,
           item.file.name,
           item.file.type,
-          idToken,
+          token,
         );
         fileIds[item.file.id] = fileId;
       }
@@ -60,7 +63,7 @@ export default function PaymentScreen({navigation}: Props) {
       );
 
       // Step 3: Create order on API (returns Razorpay order)
-      const rpOrder = await createOrder(printConfigs, idToken);
+      const rpOrder = await createOrder(printConfigs, token);
 
       // Step 4: Open Razorpay checkout
       setStatusText('Opening payment...');
@@ -109,7 +112,7 @@ export default function PaymentScreen({navigation}: Props) {
       setIsPaying(false);
       setStatusText('');
     }
-  }, [items, idToken, user, refreshOrders, resetFlow, navigation]);
+  }, [items, getValidToken, user, refreshOrders, resetFlow, navigation]);
 
   return (
     <View style={[styles.container, {backgroundColor: colors.background}]}>

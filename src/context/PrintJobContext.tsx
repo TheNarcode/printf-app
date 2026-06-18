@@ -87,7 +87,7 @@ interface ContextValue {
 const PrintJobContext = createContext<ContextValue | null>(null);
 
 export function PrintJobProvider({children}: {children: React.ReactNode}) {
-  const {idToken, isAuthenticated} = useAuth();
+  const {isAuthenticated, getValidToken} = useAuth();
   const [state, dispatch] = useReducer(reducer, {
     files: [],
     fileSettings: {},
@@ -97,13 +97,16 @@ export function PrintJobProvider({children}: {children: React.ReactNode}) {
 
   // Load orders: try API first, fall back to local storage
   const loadOrders = useCallback(async () => {
-    if (isAuthenticated && idToken) {
+    if (isAuthenticated) {
       try {
-        const apiOrders = await fetchOrders(idToken);
-        const appOrders = apiOrders.map(apiOrderToAppOrder);
-        dispatch({type: 'SET_ORDERS', payload: appOrders});
-        setStoredOrders(appOrders); // cache locally
-        return;
+        const token = await getValidToken();
+        if (token) {
+          const apiOrders = await fetchOrders(token);
+          const appOrders = apiOrders.map(apiOrderToAppOrder);
+          dispatch({type: 'SET_ORDERS', payload: appOrders});
+          setStoredOrders(appOrders); // cache locally
+          return;
+        }
       } catch (err) {
         console.warn('Failed to fetch orders from API, falling back to local:', err);
       }
@@ -111,7 +114,7 @@ export function PrintJobProvider({children}: {children: React.ReactNode}) {
     // Fallback: local storage
     const stored = await getStoredOrders();
     dispatch({type: 'SET_ORDERS', payload: stored});
-  }, [isAuthenticated, idToken]);
+  }, [isAuthenticated, getValidToken]);
 
   useEffect(() => {
     loadOrders();
