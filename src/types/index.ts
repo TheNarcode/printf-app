@@ -23,12 +23,7 @@ export interface FileWithSettings {
   price: number;
 }
 
-export type OrderStatus =
-  | 'pending'
-  | 'processing'
-  | 'printing'
-  | 'completed'
-  | 'failed';
+export type OrderStatus = 0 | 1 | 2;
 
 export interface Order {
   id: string;

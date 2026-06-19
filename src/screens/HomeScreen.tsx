@@ -52,9 +52,9 @@ export default function HomeScreen({navigation}: Props) {
   const recentOrders = orders.slice(0, 3);
 
   const counts = useMemo(() => ({
-    inProgress: orders.filter(o => ['pending', 'printing', 'processing'].includes(o.status)).length,
-    completed: orders.filter(o => o.status === 'completed').length,
-    failed: orders.filter(o => o.status === 'failed').length,
+    inProgress: orders.filter(o => o.status === 0).length,
+    completed: orders.filter(o => o.status === 2).length,
+    failed: orders.filter(o => o.status === 1).length,
     pages: orders.reduce((sum, o) => sum + o.totalPages, 0),
   }), [orders]);
 

@@ -190,15 +190,10 @@ export async function fetchOrders(
 import type { Order, FileWithSettings, OrderStatus } from '../types';
 
 function mapApiStatus(status: number, paid: boolean): OrderStatus {
-  // API status: 0 = pending, 1 = processing, 2 = printing, 3 = completed, 4 = failed
-  if (!paid) return 'pending';
-  switch (status) {
-    case 1: return 'processing';
-    case 2: return 'printing';
-    case 3: return 'completed';
-    case 4: return 'failed';
-    default: return 'pending';
-  }
+  if (!paid) return 0;
+  if (status === 1) return 1;
+  if (status === 2) return 2;
+  return 0;
 }
 
 function reverseMapColor(color: string): 'color' | 'bw' {
@@ -263,7 +258,7 @@ export function apiOrderToAppOrder(apiOrder: ApiOrder): Order {
     printerName: 'Assigned on print',
     totalPages,
     totalCopies,
-    progress: appStatus === 'completed' ? 100 : appStatus === 'printing' ? 50 : 0,
+    progress: appStatus === 2 ? 100 : 0,
     estimatedCompletion: undefined,
   };
 }

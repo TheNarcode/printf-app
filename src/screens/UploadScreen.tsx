@@ -3,11 +3,13 @@ import {Alert, FlatList, StyleSheet, TouchableOpacity, View} from 'react-native'
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useTheme} from '../theme/ThemeContext';
 import {usePrintJob} from '../context/PrintJobContext';
+import {useAuth} from '../context/AuthContext';
 import {useFileUpload} from '../hooks/useFileUpload';
 import Header from '../components/Header';
 import FileDropZone from '../components/FileDropZone';
 import FileCard from '../components/FileCard';
 import {formatFileSize} from '../utils/formatters';
+import {startUploads} from '../services/fileUploadManager';
 import type {UploadedFile} from '../types';
 import {Text} from '../components/Text';
 import {scale, moderateScale} from '../utils/responsive';
@@ -20,6 +22,7 @@ export default function UploadScreen({navigation}: Props) {
   const {colors} = useTheme();
   const insets = useSafeAreaInsets();
   const {files, addFiles, removeFile} = usePrintJob();
+  const {getValidToken} = useAuth();
   const {pickFiles} = useFileUpload();
 
   const totalSize = files.reduce((sum, f) => sum + f.size, 0);
@@ -30,8 +33,12 @@ export default function UploadScreen({navigation}: Props) {
   }, [pickFiles, addFiles]);
 
   const handleNext = useCallback(() => {
-    if (files.length > 0) navigation.navigate('Settings');
-  }, [files.length, navigation]);
+    if (files.length > 0) {
+      // Start uploading files in the background while the user configures settings
+      startUploads(files, getValidToken);
+      navigation.navigate('Settings');
+    }
+  }, [files, navigation, getValidToken]);
 
   const handleClose = useCallback(() => navigation.goBack(), [navigation]);
 

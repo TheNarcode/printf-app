@@ -3,6 +3,7 @@ import type {FileWithSettings, Order, PrintSettings, UploadedFile} from '../type
 import {calculateConvenienceFee, calculateFilePrice, generateId, generateOrderRef} from '../utils/formatters';
 import {getStoredOrders, setStoredOrders} from '../services/storage';
 import {fetchOrders, apiOrderToAppOrder} from '../services/api';
+import {resetUploads} from '../services/fileUploadManager';
 import {useAuth} from './AuthContext';
 
 const defaultSettings: PrintSettings = {
@@ -125,7 +126,10 @@ export function PrintJobProvider({children}: {children: React.ReactNode}) {
   const clearFiles = useCallback(() => dispatch({type: 'CLEAR_FILES'}), []);
   const updateFileSettings = useCallback((fileId: string, settings: Partial<PrintSettings>) =>
     dispatch({type: 'UPDATE_SETTINGS', payload: {fileId, settings}}), []);
-  const resetFlow = useCallback(() => dispatch({type: 'RESET_FLOW'}), []);
+  const resetFlow = useCallback(() => {
+    resetUploads();
+    dispatch({type: 'RESET_FLOW'});
+  }, []);
 
   const getFilesWithSettings = useCallback((): FileWithSettings[] => {
     return state.files.map(file => {
@@ -153,7 +157,7 @@ export function PrintJobProvider({children}: {children: React.ReactNode}) {
       files: items,
       totalPrice: total,
       convenienceFee: fee,
-      status: 'pending',
+      status: 0,
       printerNumber: '--',
       printerName: 'Assigned on print',
       totalPages,

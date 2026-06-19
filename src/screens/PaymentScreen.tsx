@@ -9,7 +9,8 @@ import Header from '../components/Header';
 import {formatCurrency, formatFileSize} from '../utils/formatters';
 import {Text} from '../components/Text';
 import {scale, moderateScale} from '../utils/responsive';
-import {uploadFile, createOrder, buildPrintConfig} from '../services/api';
+import {createOrder, buildPrintConfig} from '../services/api';
+import {getFileId} from '../services/fileUploadManager';
 
 const RAZORPAY_KEY = 'rzp_test_StI0D1pMPdbae3';
 
@@ -38,17 +39,11 @@ export default function PaymentScreen({navigation}: Props) {
       const token = await getValidToken();
       if (!token) throw new Error('Authentication required');
 
-      // Step 1: Upload all files to the API
-      setStatusText('Uploading files...');
+      // Step 1: Wait for background uploads to complete
+      setStatusText('Preparing files...');
       const fileIds: Record<string, string> = {};
       for (const item of items) {
-        const {fileId} = await uploadFile(
-          item.file.uri,
-          item.file.name,
-          item.file.type,
-          token,
-        );
-        fileIds[item.file.id] = fileId;
+        fileIds[item.file.id] = await getFileId(item.file.id);
       }
 
       // Step 2: Build PrintConfig payloads

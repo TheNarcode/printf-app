@@ -54,9 +54,11 @@ export default function AllOrdersScreen({navigation, route}: Props) {
     let result = orders;
     if (filter !== 'all') {
       if (filter === 'pending') {
-        result = result.filter(o => o.status === 'pending' || o.status === 'printing' || o.status === 'processing');
-      } else {
-        result = result.filter(o => o.status === filter);
+        result = result.filter(o => o.status === 0);
+      } else if (filter === 'completed') {
+        result = result.filter(o => o.status === 2);
+      } else if (filter === 'failed') {
+        result = result.filter(o => o.status === 1);
       }
     }
     if (search.trim()) {

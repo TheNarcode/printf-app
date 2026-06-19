@@ -13,14 +13,12 @@ interface OrderCardProps {
   variant?: 'home' | 'list';
 }
 
-export const getStatusStyle = (status: string, colors: any) => {
+export const getStatusStyle = (status: number, colors: any) => {
   switch (status) {
-    case 'completed': return { bg: colors.successBg, text: colors.textSecondary, border: colors.borderLight, dot: colors.success, label: 'Completed' };
-    case 'printing':
-    case 'processing': return { bg: colors.primaryBg, text: colors.primary, border: colors.primaryBorder, dot: colors.primary, label: 'In Progress' };
-    case 'pending': return { bg: colors.borderLight, text: colors.textSecondary, border: colors.border, dot: colors.textMuted, label: 'Pending' };
-    case 'failed': return { bg: colors.dangerBg, text: colors.danger, border: colors.dangerBorder, dot: colors.danger, label: 'Error' };
-    default: return { bg: colors.surface, text: colors.textMuted, border: colors.border, dot: colors.textMuted, label: status };
+    case 2: return { bg: colors.successBg, text: colors.textSecondary, border: colors.borderLight, dot: colors.success, label: 'Completed' };
+    case 0: return { bg: colors.borderLight, text: colors.textSecondary, border: colors.border, dot: colors.textMuted, label: 'Pending' };
+    case 1: return { bg: colors.dangerBg, text: colors.danger, border: colors.dangerBorder, dot: colors.danger, label: 'Error' };
+    default: return { bg: colors.surface, text: colors.textMuted, border: colors.border, dot: colors.textMuted, label: 'Unknown' };
   }
 };
 
@@ -29,9 +27,9 @@ const OrderCard = memo(({order, onPress, variant = 'list'}: OrderCardProps) => {
   const statusStyle = getStatusStyle(order.status, colors);
   const firstFile = order.files[0]?.file;
   const isImage = firstFile?.type.includes('image');
-  const Icon = order.status === 'failed' ? AlertTriangle : (isImage ? ImageIcon : FileText);
-  const iconBg = order.status === 'failed' ? colors.dangerBg : colors.primaryBg;
-  const iconColor = order.status === 'failed' ? colors.danger : colors.primary;
+  const Icon = order.status === 1 ? AlertTriangle : (isImage ? ImageIcon : FileText);
+  const iconBg = order.status === 1 ? colors.dangerBg : colors.primaryBg;
+  const iconColor = order.status === 1 ? colors.danger : colors.primary;
 
   const isHome = variant === 'home';
 
@@ -62,9 +60,9 @@ const OrderCard = memo(({order, onPress, variant = 'list'}: OrderCardProps) => {
               {order.orderRef.replace('#', '')} • {order.printerName}
             </Text>
             <Text style={[styles.homeTime, {color: colors.textSecondary}]}>
-              {order.status === 'completed' ? formatTime(order.createdAt) : 
-               order.status === 'failed' ? 'Out of Paper' : 
-               order.status === 'pending' ? 'Queued' : `${order.progress}%`}
+              {order.status === 2 ? formatTime(order.createdAt) : 
+               order.status === 1 ? 'Out of Paper' : 
+               order.status === 0 ? 'Queued' : `${order.progress}%`}
             </Text>
           </View>
         </View>
@@ -73,9 +71,9 @@ const OrderCard = memo(({order, onPress, variant = 'list'}: OrderCardProps) => {
   }
 
   // List Variant (All Orders page)
-  const isFailedOrCancelled = order.status === 'failed';
+  const isFailedOrCancelled = order.status === 1;
   const listBadgeStyle = isFailedOrCancelled ? { bg: colors.dangerBg, text: colors.danger, label: 'Cancelled' } : 
-                         order.status === 'completed' ? { bg: colors.borderLight, text: colors.textSecondary, label: 'Completed' } :
+                         order.status === 2 ? { bg: colors.borderLight, text: colors.textSecondary, label: 'Completed' } :
                          { bg: colors.warningBg, text: colors.warning, label: 'Pending' };
 
   return (
@@ -98,7 +96,7 @@ const OrderCard = memo(({order, onPress, variant = 'list'}: OrderCardProps) => {
             </View>
           </View>
           <Text style={[styles.listMeta, {color: colors.textMuted}]}>
-            {order.totalCopies} Copies • {order.status === 'completed' ? `Done ${formatDateShort(order.createdAt)}` : 'Due Today'}
+            {order.totalCopies} Copies • {order.status === 2 ? `Done ${formatDateShort(order.createdAt)}` : 'Due Today'}
           </Text>
         </View>
       </View>
