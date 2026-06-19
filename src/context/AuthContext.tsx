@@ -183,6 +183,21 @@ export function AuthProvider({children}: {children: React.ReactNode}) {
     return null;
   }, [user, idToken, signOut]);
 
+  // ── Register FCM token when authenticated ──────────────────────
+  useEffect(() => {
+    if (!user || !idToken) return;
+
+    // Register FCM token with backend
+    const {registerFCMToken, setupTokenRefreshListener} =
+      require('../services/notifications') as typeof import('../services/notifications');
+
+    registerFCMToken(getValidToken);
+
+    // Listen for token refreshes and re-register
+    const unsubscribe = setupTokenRefreshListener(getValidToken);
+    return unsubscribe;
+  }, [user, idToken, getValidToken]);
+
   const value = useMemo(
     () => ({
       user,

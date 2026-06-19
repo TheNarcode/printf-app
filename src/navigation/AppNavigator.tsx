@@ -1,6 +1,7 @@
 import React from 'react';
 import {View} from 'react-native';
 import {NavigationContainer, DefaultTheme, DarkTheme} from '@react-navigation/native';
+import type {NavigationContainerRef} from '@react-navigation/native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {useAuth} from '../context/AuthContext';
 import {useTheme} from '../theme/ThemeContext';
@@ -28,7 +29,11 @@ export type RootStackParamList = {
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
-export default function AppNavigator() {
+interface Props {
+  navigationRef?: any;
+}
+
+export default function AppNavigator({navigationRef}: Props) {
   const {isAuthenticated, isLoading} = useAuth();
   const {isDark, colors} = useTheme();
 
@@ -53,7 +58,7 @@ export default function AppNavigator() {
   }
 
   return (
-    <NavigationContainer theme={navTheme}>
+    <NavigationContainer ref={navigationRef} theme={navTheme}>
       <Stack.Navigator screenOptions={{headerShown: false, animation: 'slide_from_right', contentStyle: {backgroundColor: colors.background}}}>
         {!isAuthenticated ? (
           <Stack.Screen name="Login" component={LoginScreen} options={{animation: 'fade'}} />

@@ -37,16 +37,14 @@ export function calculateFilePrice(
   copies: number = 1,
   pagesPerSheet: number = 1,
 ): number {
-  const base: Record<string, number> = {a4: 2, a3: 4};
-  const colorMul = colorMode === 'color' ? 1.5 : 1;
-  const effectivePages = Math.ceil(pages / pagesPerSheet);
-  const sheets = sides !== 'single' ? Math.ceil(effectivePages / 2) : effectivePages;
-  const sideMul = sides !== 'single' ? 0.85 : 1;
-  return Math.round(sheets * base[paperSize] * colorMul * sideMul * copies * 100) / 100;
+  const effectiveSheets = Math.ceil(pages / pagesPerSheet);
+  // Backend logic: 2 INR per effective sheet, ignoring color/paper-size for now
+  return effectiveSheets * copies * 2;
 }
 
 export function calculateConvenienceFee(subtotal: number): number {
-  return Math.round(subtotal * 0.08 * 100) / 100;
+  // Backend logic: 5% convenience fee
+  return Math.round(subtotal * 0.05 * 100) / 100;
 }
 
 export function getFileTypeColor(filename: string): string {

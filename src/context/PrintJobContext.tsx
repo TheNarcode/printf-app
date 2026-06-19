@@ -134,8 +134,10 @@ export function PrintJobProvider({children}: {children: React.ReactNode}) {
   const getFilesWithSettings = useCallback((): FileWithSettings[] => {
     return state.files.map(file => {
       const s = state.fileSettings[file.id] || defaultSettings;
-      const price = calculateFilePrice(file.pages, s.colorMode, s.paperSize, s.sides, s.copies, s.pagesPerSheet);
-      return {file, settings: s, price};
+      const {parsePageRange} = require('../utils/previewUtils');
+      const effectivePages = parsePageRange(s.pageRange, file.pages).length;
+      const price = calculateFilePrice(effectivePages, s.colorMode, s.paperSize, s.sides, s.copies, s.pagesPerSheet);
+      return {file: {...file, pages: effectivePages}, settings: s, price};
     });
   }, [state.files, state.fileSettings]);
 

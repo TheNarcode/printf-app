@@ -47,7 +47,7 @@ const OrderCard = memo(({order, onPress, variant = 'list'}: OrderCardProps) => {
         <View style={styles.homeContent}>
           <View style={styles.homeTopRow}>
             <Text style={[styles.homeTitle, {color: colors.text}]} numberOfLines={1}>
-              {firstFile?.name.replace(/\.[^/.]+$/, "") || 'Print Order'}
+              {order.orderRef}
             </Text>
             <View style={[styles.badge, {backgroundColor: statusStyle.bg, borderColor: statusStyle.border}]}>
               <View style={[styles.badgeDot, {backgroundColor: statusStyle.dot}]} />
@@ -57,7 +57,7 @@ const OrderCard = memo(({order, onPress, variant = 'list'}: OrderCardProps) => {
           
           <View style={styles.homeBottomRow}>
             <Text style={[styles.homeSubtitle, {color: colors.textMuted}]} numberOfLines={1}>
-              {order.orderRef.replace('#', '')} • {order.printerName}
+              {order.totalCopies} Copies • {order.printerName}
             </Text>
             <Text style={[styles.homeTime, {color: colors.textSecondary}]}>
               {order.status === 2 ? formatTime(order.createdAt) : 
@@ -73,7 +73,7 @@ const OrderCard = memo(({order, onPress, variant = 'list'}: OrderCardProps) => {
   // List Variant (All Orders page)
   const isFailedOrCancelled = order.status === 1;
   const listBadgeStyle = isFailedOrCancelled ? { bg: colors.dangerBg, text: colors.danger, label: 'Cancelled' } : 
-                         order.status === 2 ? { bg: colors.borderLight, text: colors.textSecondary, label: 'Completed' } :
+                         order.status === 2 ? { bg: colors.successBg, text: colors.success, label: 'Completed' } :
                          { bg: colors.warningBg, text: colors.warning, label: 'Pending' };
 
   return (
@@ -89,14 +89,14 @@ const OrderCard = memo(({order, onPress, variant = 'list'}: OrderCardProps) => {
         <View style={styles.listInfo}>
           <View style={styles.listTitleRow}>
             <Text style={[styles.listTitle, {color: isFailedOrCancelled ? colors.textMuted : colors.text}]} numberOfLines={1}>
-              {isFailedOrCancelled ? <Text style={{textDecorationLine: 'line-through'}}>{firstFile?.name}</Text> : firstFile?.name}
+              {isFailedOrCancelled ? <Text style={{textDecorationLine: 'line-through'}}>{order.orderRef}</Text> : order.orderRef}
             </Text>
             <View style={[styles.listBadge, {backgroundColor: listBadgeStyle.bg}]}>
               <Text style={[styles.listBadgeText, {color: listBadgeStyle.text}]}>{listBadgeStyle.label}</Text>
             </View>
           </View>
           <Text style={[styles.listMeta, {color: colors.textMuted}]}>
-            {order.totalCopies} Copies • {order.status === 2 ? `Done ${formatDateShort(order.createdAt)}` : 'Due Today'}
+            {order.totalCopies} Copies • {order.status === 2 ? `Done ${formatDateShort(order.createdAt)}` : formatDateTime(order.createdAt)}
           </Text>
         </View>
       </View>

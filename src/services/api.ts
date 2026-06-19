@@ -185,9 +185,9 @@ export async function fetchOrders(
   return response.json();
 }
 
-// ── Convert API Order → App Order ───────────────────────────────────
-
 import type { Order, FileWithSettings, OrderStatus } from '../types';
+import { calculateFilePrice } from '../utils/formatters';
+import { parsePageRange } from '../utils/previewUtils';
 
 function mapApiStatus(status: number, paid: boolean): OrderStatus {
   if (!paid) return 0;
@@ -238,7 +238,7 @@ export function apiOrderToAppOrder(apiOrder: ApiOrder): Order {
         pagesPerSheet: parseInt(f.numberUp, 10) || 1,
         orientation: reverseMapOrientation(f.orientation),
       },
-      price: apiOrder.amount,
+      price: calculateFilePrice(parsePageRange(f.pageRanges || 'all', pages).length, reverseMapColor(f.color), reverseMapPaperFormat(f.paperFormat), reverseMapSides(f.sides), copies, parseInt(f.numberUp, 10) || 1),
     };
   });
 
@@ -251,8 +251,8 @@ export function apiOrderToAppOrder(apiOrder: ApiOrder): Order {
     orderRef: apiOrder.id.substring(0, 8).toUpperCase(),
     createdAt: apiOrder.createdAt,
     files: filesWithSettings,
-    totalPrice: apiOrder.amount,
-    convenienceFee: 0,
+    totalPrice: apiOrder.amount / 100,
+    convenienceFee: (apiOrder.amount / 100) - filesWithSettings.reduce((s, f) => s + f.price, 0),
     status: appStatus,
     printerNumber: '--',
     printerName: 'Assigned on print',

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "89608920119",
+    "project_id": "printf-fcm",
+    "storage_bucket": "printf-fcm.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:89608920119:android:366b00dcca3b5f9138b3b2",
+        "android_client_info": {
+          "package_name": "com.printf"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDCw8uKjldexlcMMW2BXa6PR5RHtPXV1Fc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
