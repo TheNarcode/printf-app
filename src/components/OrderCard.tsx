@@ -60,9 +60,7 @@ const OrderCard = memo(({order, onPress, variant = 'list'}: OrderCardProps) => {
               {order.totalCopies} Copies • {order.printerName}
             </Text>
             <Text style={[styles.homeTime, {color: colors.textSecondary}]}>
-              {order.status === 2 ? formatTime(order.createdAt) : 
-               order.status === 1 ? 'Out of Paper' : 
-               order.status === 0 ? 'Queued' : `${order.progress}%`}
+              {formatTime(order.createdAt)}
             </Text>
           </View>
         </View>
@@ -96,7 +94,7 @@ const OrderCard = memo(({order, onPress, variant = 'list'}: OrderCardProps) => {
             </View>
           </View>
           <Text style={[styles.listMeta, {color: colors.textMuted}]}>
-            {order.totalCopies} Copies • {order.status === 2 ? `Done ${formatDateShort(order.createdAt)}` : formatDateTime(order.createdAt)}
+            {order.totalCopies} Copies • {formatDateTime(order.createdAt)}
           </Text>
         </View>
       </View>

@@ -192,17 +192,16 @@ export default function OrderDetailScreen({ navigation, route }: Props) {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  content: { paddingHorizontal: scale(16), paddingTop: scale(16) },
+  content: { paddingHorizontal: scale(20), paddingTop: scale(16) },
   emptyState: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   emptyText: { fontSize: moderateScale(14) },
 
   receiptContainer: {
-    marginHorizontal: scale(8),
     shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 10, elevation: 5,
   },
   receiptBody: {
-    paddingHorizontal: scale(18),
-    paddingVertical: scale(8),
+    paddingHorizontal: scale(20),
+    paddingVertical: scale(16),
   },
 
   // Jagged Edges

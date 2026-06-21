@@ -4,7 +4,7 @@ import type { PrintSettings } from '../types';
 // The API runs locally — change this to your machine's local IP
 // when running on a physical device (localhost doesn't work from device).
 // For emulator, 10.0.2.2 maps to host machine's localhost.
-const API_BASE_URL = 'https://thinkpad.aditya.stream';
+const API_BASE_URL = 'https://print.aditya.stream';
 
 // ── Settings mapping (App → API/IPP) ───────────────────────────────
 
@@ -68,37 +68,67 @@ export function buildPrintConfig(
   };
 }
 
+// ── Timeout wrapper ─────────────────────────────────────────────────
+
+const API_TIMEOUT_MS = 15000; // 15 seconds
+
+function fetchWithTimeout(url: string, options: RequestInit, timeoutMs = API_TIMEOUT_MS): Promise<Response> {
+  return new Promise((resolve, reject) => {
+    const controller = new AbortController();
+    const timer = setTimeout(() => {
+      controller.abort();
+      reject(new Error('Request timed out. Please check your connection and try again.'));
+    }, timeoutMs);
+
+    fetch(url, { ...options, signal: controller.signal })
+      .then(res => { clearTimeout(timer); resolve(res); })
+      .catch(err => {
+        clearTimeout(timer);
+        if (err.name === 'AbortError') {
+          reject(new Error('Request timed out. Please check your connection and try again.'));
+        } else {
+          reject(new Error('Unable to connect right now. Please try again later.'));
+        }
+      });
+  });
+}
+
 // ── File Upload ─────────────────────────────────────────────────────
 
 export async function uploadFile(
   uri: string,
   fileName: string,
   fileType: string,
-  _idToken?: string | null,
+  idToken?: string | null,
 ): Promise<{ fileId: string }> {
-  const response = await ReactNativeBlobUtil.fetch(
-    'POST',
-    `${API_BASE_URL}/file/create`,
-    {
-      'Content-Type': 'multipart/form-data',
-      // ...(idToken ? {'xxx-auth-token': idToken} : {}),
-    },
-    [
+  try {
+    const response = await ReactNativeBlobUtil.fetch(
+      'POST',
+      `${API_BASE_URL}/file/create`,
       {
-        name: 'file',
-        filename: fileName,
-        type: fileType,
-        data: ReactNativeBlobUtil.wrap(uri.replace('file://', '')),
+        'Content-Type': 'multipart/form-data',
+        ...(idToken ? {'xxx-auth-token': idToken} : {}),
       },
-    ],
-  );
+      [
+        {
+          name: 'file',
+          filename: fileName,
+          type: fileType,
+          data: ReactNativeBlobUtil.wrap(uri.replace('file://', '')),
+        },
+      ],
+    );
 
-  const status = response.info().status;
-  if (status !== 200) {
-    throw new Error(`File upload failed with status ${status}: ${response.text()}`);
+    const status = response.info().status;
+    if (status !== 200) {
+      throw new Error(`File upload failed (${status}): ${response.text()}`);
+    }
+
+    return response.json();
+  } catch (err: any) {
+    if (err.message?.includes('File upload failed')) throw err;
+    throw new Error('Unable to upload file. Please check your connection and try again.');
   }
-
-  return response.json();
 }
 
 // ── Order Creation ──────────────────────────────────────────────────
@@ -117,7 +147,7 @@ export async function createOrder(
   printConfigs: PrintConfigPayload[],
   idToken?: string | null,
 ): Promise<RazorpayOrderResponse> {
-  const response = await fetch(`${API_BASE_URL}/order/create`, {
+  const response = await fetchWithTimeout(`${API_BASE_URL}/order/create`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -170,7 +200,7 @@ export interface ApiOrder {
 export async function fetchOrders(
   idToken?: string | null,
 ): Promise<ApiOrder[]> {
-  const response = await fetch(`${API_BASE_URL}/order/list`, {
+  const response = await fetchWithTimeout(`${API_BASE_URL}/order/list`, {
     method: 'GET',
     headers: {
       ...(idToken ? { 'xxx-auth-token': idToken } : {}),

@@ -97,7 +97,7 @@ export function PrintJobProvider({children}: {children: React.ReactNode}) {
   });
 
   // Load orders: try API first, fall back to local storage
-  const loadOrders = useCallback(async () => {
+  const loadOrders = useCallback(async (throwOnError = false) => {
     if (isAuthenticated) {
       try {
         const token = await getValidToken();
@@ -110,6 +110,7 @@ export function PrintJobProvider({children}: {children: React.ReactNode}) {
         }
       } catch (err) {
         console.warn('Failed to fetch orders from API, falling back to local:', err);
+        if (throwOnError) throw err;
       }
     }
     // Fallback: local storage
@@ -118,7 +119,7 @@ export function PrintJobProvider({children}: {children: React.ReactNode}) {
   }, [isAuthenticated, getValidToken]);
 
   useEffect(() => {
-    loadOrders();
+    loadOrders(false); // silent on mount
   }, [loadOrders]);
 
   const addFiles = useCallback((files: UploadedFile[]) => dispatch({type: 'ADD_FILES', payload: files}), []);
@@ -177,7 +178,7 @@ export function PrintJobProvider({children}: {children: React.ReactNode}) {
   }, []);
 
   const refreshOrders = useCallback(async () => {
-    await loadOrders();
+    await loadOrders(true); // throw on error so callers can show alerts
   }, [loadOrders]);
 
   const value = useMemo(() => ({

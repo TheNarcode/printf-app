@@ -35,6 +35,14 @@ function navigateToOrder(orderId: string) {
   }
 }
 
+import { Bell } from 'lucide-react-native';
+import { scale, moderateScale } from './src/utils/responsive';
+
+// Helper to remove emojis from string
+function stripEmojis(str: string) {
+  return str.replace(/([\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF])/g, '').trim();
+}
+
 // ── In-app toast for foreground notifications ──────────────────────
 function NotificationToast() {
   const {colors} = useTheme();
@@ -42,33 +50,33 @@ function NotificationToast() {
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
   const [orderId, setOrderId] = useState<string | null>(null);
-  const slideAnim = useRef(new Animated.Value(-100)).current;
+  const slideAnim = useRef(new Animated.Value(-150)).current;
   const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const show = useCallback(
     (t: string, b: string, oid: string | null) => {
-      setTitle(t);
-      setBody(b);
+      setTitle(stripEmojis(t));
+      setBody(stripEmojis(b));
       setOrderId(oid);
       setVisible(true);
 
       Animated.spring(slideAnim, {
-        toValue: 0,
+        toValue: 50,
         useNativeDriver: true,
         tension: 80,
         friction: 12,
       }).start();
 
-      // Auto-hide after 4 seconds
+      // Auto-hide after 5 seconds
       if (hideTimer.current) clearTimeout(hideTimer.current);
-      hideTimer.current = setTimeout(() => hide(), 4000);
+      hideTimer.current = setTimeout(() => hide(), 5000);
     },
     [slideAnim],
   );
 
   const hide = useCallback(() => {
     Animated.timing(slideAnim, {
-      toValue: -100,
+      toValue: -150,
       duration: 200,
       useNativeDriver: true,
     }).start(() => setVisible(false));
@@ -106,8 +114,11 @@ function NotificationToast() {
         onPress={handlePress}
         activeOpacity={0.8}
         style={styles.toastContent}>
+        <View style={[styles.iconContainer, { backgroundColor: colors.primaryBg }]}>
+          <Bell size={moderateScale(18)} color={colors.primary} strokeWidth={2} />
+        </View>
         <View style={styles.toastTextContainer}>
-          <Text style={[styles.toastTitle, {color: colors.text}]}>{title}</Text>
+          <Text style={[styles.toastTitle, {color: colors.text}]} numberOfLines={1}>{title}</Text>
           {body ? (
             <Text
               style={[styles.toastBody, {color: colors.textSecondary}]}
@@ -116,7 +127,11 @@ function NotificationToast() {
             </Text>
           ) : null}
         </View>
-        <Text style={[styles.toastAction, {color: colors.primary}]}>View</Text>
+        {orderId ? (
+          <View style={[styles.toastActionBtn, { backgroundColor: colors.primary }]}>
+             <Text style={[styles.toastAction, {color: colors.background}]}>View</Text>
+          </View>
+        ) : null}
       </TouchableOpacity>
     </Animated.View>
   );
@@ -212,8 +227,22 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   toastAction: {
-    fontSize: 13,
+    fontSize: 12,
     fontFamily: 'Geist-SemiBold',
+  },
+  iconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  toastActionBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+    marginLeft: 8,
   },
 });
 

@@ -1,7 +1,6 @@
 import React, {useCallback, useMemo, useState} from 'react';
-import {FlatList, RefreshControl, StyleSheet, TouchableOpacity, View} from 'react-native';
+import {Alert, FlatList, RefreshControl, StyleSheet, TouchableOpacity, View} from 'react-native';
 import {ChevronRight, ClipboardList, RefreshCcw, CheckCircle2, AlertCircle} from 'lucide-react-native';
-import {useFocusEffect} from '@react-navigation/native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useTheme} from '../theme/ThemeContext';
 import {usePrintJob} from '../context/PrintJobContext';
@@ -32,18 +31,13 @@ export default function HomeScreen({navigation}: Props) {
   const {user} = useAuth();
   const [refreshing, setRefreshing] = useState(false);
 
-  // Re-fetch orders from API every time the screen comes into focus
-  useFocusEffect(
-    useCallback(() => {
-      refreshOrders();
-    }, [refreshOrders]),
-  );
-
   // Pull-to-refresh handler
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
     try {
       await refreshOrders();
+    } catch (_err) {
+      Alert.alert('Connection Error', 'Unable to connect right now. Please try again later.');
     } finally {
       setRefreshing(false);
     }

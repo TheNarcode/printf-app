@@ -91,12 +91,20 @@ export default function PaymentScreen({navigation}: Props) {
       refreshOrders().catch(() => {});
     } catch (err: any) {
       console.error('Payment flow error:', err);
+      const msg = err?.message || '';
       // Check if user cancelled Razorpay
-      if (err?.code === 2 || err?.description?.includes('cancelled')) {
+      if (err?.code === 2 || msg.includes('cancelled')) {
         setStatusText('');
         Alert.alert('Cancelled', 'Payment was cancelled.');
+      } else if (msg.includes('Unable to connect') || msg.includes('timed out') || msg.includes('Unable to upload')) {
+        // Network / connection issue — let user retry
+        setStatusText('');
+        Alert.alert('Connection Error', 'Unable to connect right now. Please check your connection and try again.');
+      } else if (msg.includes('Authentication required')) {
+        setStatusText('');
+        Alert.alert('Session Expired', 'Please sign out and sign in again.');
       } else {
-        // Navigate to failure screen first, then clean up
+        // Actual payment failure — navigate to failure screen
         navigation.reset({
           index: 0,
           routes: [{name: 'OrderResult', params: {success: false}}],

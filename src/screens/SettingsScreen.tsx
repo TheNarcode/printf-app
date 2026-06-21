@@ -81,7 +81,12 @@ export default function SettingsScreen({navigation}: Props) {
   const isBW = settings.colorMode === 'bw';
 
   const handleBack = useCallback(() => navigation.goBack(), [navigation]);
-  const handleContinue = useCallback(() => navigation.navigate('Payment'), [navigation]);
+  const [pageRangeError, setPageRangeError] = useState('');
+
+  const handleContinue = useCallback(() => {
+    if (pageRangeError) return;
+    navigation.navigate('Payment');
+  }, [navigation, pageRangeError]);
 
   const update = useCallback(
     (key: string, value: any) => {
@@ -89,6 +94,69 @@ export default function SettingsScreen({navigation}: Props) {
     },
     [file, updateFileSettings],
   );
+
+  // Validate page range input
+  const handlePageRangeChange = useCallback((text: string) => {
+    if (!text || text.trim() === '') {
+      setPageRangeError('');
+      update('pageRange', 'all');
+      return;
+    }
+
+    // Check format: only digits, dashes, commas, spaces allowed
+    if (!/^[\d\s,\-]+$/.test(text)) {
+      setPageRangeError('Only numbers, dashes, and commas allowed');
+      update('pageRange', text);
+      return;
+    }
+
+    // Validate each part
+    const parts = text.split(',');
+    for (const part of parts) {
+      const trimmed = part.trim();
+      if (!trimmed) continue;
+      if (trimmed.includes('-')) {
+        const segments = trimmed.split('-');
+        if (segments.length !== 2) {
+          setPageRangeError('Invalid range format');
+          update('pageRange', text);
+          return;
+        }
+        const start = parseInt(segments[0].trim(), 10);
+        const end = parseInt(segments[1].trim(), 10);
+        if (isNaN(start) || isNaN(end)) {
+          setPageRangeError('Invalid range numbers');
+          update('pageRange', text);
+          return;
+        }
+        if (start > end) {
+          setPageRangeError(`Invalid range: ${start} is greater than ${end}`);
+          update('pageRange', text);
+          return;
+        }
+        if (start < 1 || end > file.pages) {
+          setPageRangeError(`Pages must be between 1 and ${file.pages}`);
+          update('pageRange', text);
+          return;
+        }
+      } else {
+        const p = parseInt(trimmed, 10);
+        if (isNaN(p)) {
+          setPageRangeError('Invalid page number');
+          update('pageRange', text);
+          return;
+        }
+        if (p < 1 || p > file.pages) {
+          setPageRangeError(`Page ${p} is out of range (1-${file.pages})`);
+          update('pageRange', text);
+          return;
+        }
+      }
+    }
+
+    setPageRangeError('');
+    update('pageRange', text);
+  }, [file, update]);
 
   // ── Page range computation ────────────────────────────────────────
   const selectedPages = useMemo(
@@ -442,12 +510,17 @@ export default function SettingsScreen({navigation}: Props) {
                 </Text>
               </View>
               <TextInput
-                style={[styles.pageRangeInput, {color: colors.text, borderColor: colors.border, backgroundColor: colors.surface}]}
+                style={[styles.pageRangeInput, {color: colors.text, borderColor: pageRangeError ? colors.danger : colors.border, backgroundColor: colors.surface}]}
                 placeholder="All pages — or enter range like 1-5, 8, 11-13"
                 placeholderTextColor={colors.textMuted}
                 value={settings.pageRange === 'all' ? '' : settings.pageRange}
-                onChangeText={text => update('pageRange', text || 'all')}
+                onChangeText={handlePageRangeChange}
               />
+              {pageRangeError ? (
+                <Text style={{fontSize: moderateScale(11), fontFamily: 'Geist-Medium', color: colors.danger, marginTop: scale(4)}}>
+                  {pageRangeError}
+                </Text>
+              ) : null}
             </View>
           </View>
         </View>
@@ -455,7 +528,11 @@ export default function SettingsScreen({navigation}: Props) {
 
       {/* ── Bottom bar ── */}
       <View style={[styles.bottomBar, {backgroundColor: colors.backgroundSecondary, borderTopColor: colors.border, paddingBottom: Math.max(insets.bottom, scale(16))}]}>
-        <TouchableOpacity onPress={handleContinue} activeOpacity={0.8} style={[styles.continueBtn, {backgroundColor: colors.primary}]}>
+        <TouchableOpacity
+          onPress={handleContinue}
+          activeOpacity={0.8}
+          disabled={!!pageRangeError}
+          style={[styles.continueBtn, {backgroundColor: pageRangeError ? colors.textMuted : colors.primary}]}>
           <Text style={[styles.continueBtnText, {color: colors.background}]}>Proceed to Payment</Text>
         </TouchableOpacity>
       </View>

@@ -1,5 +1,5 @@
 import React, {useCallback, useMemo, useState} from 'react';
-import {FlatList, RefreshControl, StyleSheet, TextInput, TouchableOpacity, View} from 'react-native';
+import {Alert, FlatList, RefreshControl, StyleSheet, TextInput, TouchableOpacity, View} from 'react-native';
 import {Search} from 'lucide-react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useTheme} from '../theme/ThemeContext';
@@ -34,6 +34,8 @@ export default function AllOrdersScreen({navigation, route}: Props) {
     setRefreshing(true);
     try {
       await refreshOrders();
+    } catch (_err) {
+      Alert.alert('Connection Error', 'Unable to connect right now. Please try again later.');
     } finally {
       setRefreshing(false);
     }

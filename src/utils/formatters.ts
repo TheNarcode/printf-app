@@ -38,12 +38,12 @@ export function calculateFilePrice(
   pagesPerSheet: number = 1,
 ): number {
   const effectiveSheets = Math.ceil(pages / pagesPerSheet);
-  // Backend logic: 2 INR per effective sheet, ignoring color/paper-size for now
-  return effectiveSheets * copies * 2;
+  // Backend: one-sided = ₹3/sheet, two-sided = ₹2/sheet
+  const pricePerSheet = sides === 'single' ? 3 : 2;
+  return effectiveSheets * copies * pricePerSheet;
 }
 
 export function calculateConvenienceFee(subtotal: number): number {
-  // Backend logic: 5% convenience fee
   return Math.round(subtotal * 0.05 * 100) / 100;
 }
 

@@ -1,7 +1,7 @@
 import messaging from '@react-native-firebase/messaging';
 import { Platform, PermissionsAndroid } from 'react-native';
 
-const API_BASE_URL = 'https://thinkpad.aditya.stream';
+const API_BASE_URL = 'https://print.aditya.stream';
 
 // ── Request notification permission (Android 13+) ───────────────────
 export async function requestNotificationPermission(): Promise<boolean> {
