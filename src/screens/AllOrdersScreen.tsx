@@ -66,7 +66,6 @@ export default function AllOrdersScreen({navigation, route}: Props) {
     if (search.trim()) {
       const q = search.toLowerCase();
       result = result.filter(o =>
-        o.orderRef.toLowerCase().includes(q) ||
         o.files.some(f => f.file.name.toLowerCase().includes(q)),
       );
     }
@@ -95,7 +94,7 @@ export default function AllOrdersScreen({navigation, route}: Props) {
           <Search size={moderateScale(16)} color={colors.textMuted} strokeWidth={2} />
           <TextInput
             style={[styles.searchInput, {color: colors.text}]}
-            placeholder="Search orders by ID or file name..."
+            placeholder="Search orders by file name..."
             placeholderTextColor={colors.textMuted}
             value={search}
             onChangeText={setSearch}
