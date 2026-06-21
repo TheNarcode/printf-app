@@ -101,11 +101,11 @@ export default function OrderDetailScreen({ navigation, route }: Props) {
 
               <View style={[
                 styles.statusPill,
-                { backgroundColor: isFailed ? colors.danger + '20' : isDone ? colors.success + '20' : colors.primaryBg }
+                { backgroundColor: isFailed ? colors.danger + '20' : isDone ? colors.success + '20' : colors.warningBg }
               ]}>
                 <Text style={[
                   styles.statusText,
-                  { color: isFailed ? colors.danger : isDone ? colors.success : colors.primary }
+                  { color: isFailed ? colors.danger : isDone ? colors.success : colors.warning }
                 ]}>STATUS: {statusLabel}</Text>
               </View>
             </View>

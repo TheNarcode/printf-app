@@ -38,8 +38,14 @@ export function calculateFilePrice(
   pagesPerSheet: number = 1,
 ): number {
   const effectiveSheets = Math.ceil(pages / pagesPerSheet);
-  // Backend: one-sided = ₹3/sheet, two-sided = ₹2/sheet
-  const pricePerSheet = sides === 'single' ? 3 : 2;
+  
+  let pricePerSheet = 0;
+  if (colorMode === 'color') {
+    pricePerSheet = sides === 'single' ? 5 : 10;
+  } else {
+    pricePerSheet = sides === 'single' ? 3 : 2;
+  }
+
   return effectiveSheets * copies * pricePerSheet;
 }
 
