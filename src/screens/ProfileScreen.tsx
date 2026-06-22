@@ -21,6 +21,8 @@ const THEME_OPTIONS: {key: ThemeMode; label: string; Icon: typeof Sun}[] = [
   {key: 'system', label: 'Auto', Icon: Monitor},
 ];
 
+import { CustomAlertAPI } from '../components/CustomAlert';
+
 export default function ProfileScreen({navigation}: Props) {
   const {colors, mode, setMode} = useTheme();
   const insets = useSafeAreaInsets();
@@ -30,7 +32,7 @@ export default function ProfileScreen({navigation}: Props) {
   const handleBack = useCallback(() => navigation.goBack(), [navigation]);
 
   const handleSignOut = useCallback(() => {
-    Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
+    CustomAlertAPI.alert('Sign Out', 'Are you sure you want to sign out?', [
       {text: 'Cancel', style: 'cancel'},
       {text: 'Sign Out', style: 'destructive', onPress: async () => { await signOut(); }},
     ]);

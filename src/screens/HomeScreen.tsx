@@ -5,6 +5,7 @@ import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useTheme} from '../theme/ThemeContext';
 import {usePrintJob} from '../context/PrintJobContext';
 import {useAuth} from '../context/AuthContext';
+import {CustomAlertAPI} from '../components/CustomAlert';
 import Header from '../components/Header';
 import ProfileButton from '../components/ProfileButton';
 import OrderCard from '../components/OrderCard';
@@ -37,7 +38,7 @@ export default function HomeScreen({navigation}: Props) {
     try {
       await refreshOrders();
     } catch (_err) {
-      Alert.alert('Connection Error', 'Unable to connect right now. Please try again later.');
+      CustomAlertAPI.alert('Connection Error', 'Unable to connect right now. Please try again later.');
     } finally {
       setRefreshing(false);
     }

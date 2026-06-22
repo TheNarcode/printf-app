@@ -69,8 +69,8 @@ const OrderCard = memo(({order, onPress, variant = 'list'}: OrderCardProps) => {
   }
 
   // List Variant (All Orders page)
-  const isFailedOrCancelled = order.status === 1;
-  const listBadgeStyle = isFailedOrCancelled ? { bg: colors.dangerBg, text: colors.danger, label: 'Cancelled' } : 
+  const isFailed = order.status === 1;
+  const listBadgeStyle = isFailed ? { bg: colors.dangerBg, text: colors.danger, label: 'Failed' } : 
                          order.status === 2 ? { bg: colors.successBg, text: colors.success, label: 'Completed' } :
                          { bg: colors.warningBg, text: colors.warning, label: 'Pending' };
 
@@ -86,8 +86,8 @@ const OrderCard = memo(({order, onPress, variant = 'list'}: OrderCardProps) => {
         </View>
         <View style={styles.listInfo}>
           <View style={styles.listTitleRow}>
-            <Text style={[styles.listTitle, {color: isFailedOrCancelled ? colors.textMuted : colors.text}]} numberOfLines={1}>
-              {isFailedOrCancelled ? <Text style={{textDecorationLine: 'line-through'}}>{order.orderRef}</Text> : order.orderRef}
+            <Text style={[styles.listTitle, {color: colors.text}]} numberOfLines={1}>
+              {order.orderRef}
             </Text>
             <View style={[styles.listBadge, {backgroundColor: listBadgeStyle.bg}]}>
               <Text style={[styles.listBadgeText, {color: listBadgeStyle.text}]}>{listBadgeStyle.label}</Text>

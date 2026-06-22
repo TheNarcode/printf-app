@@ -21,8 +21,10 @@ const FILTERS: {key: Filter; label: string}[] = [
   {key: 'all', label: 'All'},
   {key: 'pending', label: 'Pending'},
   {key: 'completed', label: 'Completed'},
-  {key: 'failed', label: 'Cancelled'},
+  {key: 'failed', label: 'Failed'},
 ];
+
+import { CustomAlertAPI } from '../components/CustomAlert';
 
 export default function AllOrdersScreen({navigation, route}: Props) {
   const {colors} = useTheme();
@@ -35,7 +37,7 @@ export default function AllOrdersScreen({navigation, route}: Props) {
     try {
       await refreshOrders();
     } catch (_err) {
-      Alert.alert('Connection Error', 'Unable to connect right now. Please try again later.');
+      CustomAlertAPI.alert('Connection Error', 'Unable to connect right now. Please try again later.');
     } finally {
       setRefreshing(false);
     }

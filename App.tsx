@@ -137,6 +137,8 @@ function NotificationToast() {
   );
 }
 
+import { CustomAlert } from './src/components/CustomAlert';
+
 function AppContent() {
   const {isDark} = useTheme();
 
@@ -145,7 +147,6 @@ function AppContent() {
     const unsubscribe = messaging().onNotificationOpenedApp((remoteMessage) => {
       const orderId = remoteMessage.data?.orderId as string | undefined;
       if (orderId) {
-        // Small delay to ensure navigation is ready
         setTimeout(() => navigateToOrder(orderId), 500);
       }
     });
@@ -158,7 +159,6 @@ function AppContent() {
       .getInitialNotification()
       .then((remoteMessage) => {
         if (remoteMessage?.data?.orderId) {
-          // Delay longer for cold start — navigation needs to mount
           setTimeout(
             () => navigateToOrder(remoteMessage.data!.orderId as string),
             1500,
@@ -176,6 +176,7 @@ function AppContent() {
       />
       <AppNavigator navigationRef={navigationRef} />
       <NotificationToast />
+      <CustomAlert />
     </>
   );
 }

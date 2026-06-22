@@ -3,8 +3,9 @@ import {ActivityIndicator, Alert, ScrollView, StyleSheet, TouchableOpacity, View
 import {Lock, FileText} from 'lucide-react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useTheme} from '../theme/ThemeContext';
-import {usePrintJob} from '../context/PrintJobContext';
 import {useAuth} from '../context/AuthContext';
+import {usePrintJob} from '../context/PrintJobContext';
+import {CustomAlertAPI} from '../components/CustomAlert';
 import Header from '../components/Header';
 import {formatCurrency, formatFileSize} from '../utils/formatters';
 import {Text} from '../components/Text';
@@ -95,14 +96,14 @@ export default function PaymentScreen({navigation}: Props) {
       // Check if user cancelled Razorpay
       if (err?.code === 2 || msg.includes('cancelled')) {
         setStatusText('');
-        Alert.alert('Cancelled', 'Payment was cancelled.');
+        CustomAlertAPI.alert('Cancelled', 'Payment was cancelled.');
       } else if (msg.includes('Unable to connect') || msg.includes('timed out') || msg.includes('Unable to upload')) {
         // Network / connection issue — let user retry
         setStatusText('');
-        Alert.alert('Connection Error', 'Unable to connect right now. Please check your connection and try again.');
+        CustomAlertAPI.alert('Connection Error', 'Unable to connect right now. Please check your connection and try again.');
       } else if (msg.includes('Authentication required')) {
         setStatusText('');
-        Alert.alert('Session Expired', 'Please sign out and sign in again.');
+        CustomAlertAPI.alert('Session Expired', 'Please sign out and sign in again.');
       } else {
         // Actual payment failure — navigate to failure screen
         navigation.reset({

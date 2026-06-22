@@ -283,6 +283,7 @@ export function apiOrderToAppOrder(apiOrder: ApiOrder): Order {
     files: filesWithSettings,
     totalPrice: apiOrder.amount / 100,
     convenienceFee: (apiOrder.amount / 100) - filesWithSettings.reduce((s, f) => s + f.price, 0),
+    paymentRequestId: apiOrder.paymentRequestId,
     status: appStatus,
     printerNumber: '--',
     printerName: 'Assigned on print',

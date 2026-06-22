@@ -39,6 +39,7 @@ export interface Order {
   totalCopies: number;
   progress: number; // 0-100
   estimatedCompletion?: string;
+  paymentRequestId?: string;
 }
 
 export interface OrderTimeline {
