@@ -1,5 +1,12 @@
-import React, {createContext, useCallback, useContext, useEffect, useMemo, useState} from 'react';
-import type {UserProfile} from '../types';
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
+import type { UserProfile } from '../types';
 import {
   getStoredUser,
   setStoredUser,
@@ -8,7 +15,8 @@ import {
   clearAllStorage,
 } from '../services/storage';
 
-const GOOGLE_WEB_CLIENT_ID = '5347000708-huid8jinh9am79lkn3fvuf8ddisdconv.apps.googleusercontent.com';
+const GOOGLE_WEB_CLIENT_ID =
+  '5347000708-huid8jinh9am79lkn3fvuf8ddisdconv.apps.googleusercontent.com';
 
 interface AuthContextValue {
   user: UserProfile | null;
@@ -30,7 +38,7 @@ const AuthContext = createContext<AuthContextValue>({
   getValidToken: async () => null,
 });
 
-export function AuthProvider({children}: {children: React.ReactNode}) {
+export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [idToken, setIdToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -42,7 +50,9 @@ export function AuthProvider({children}: {children: React.ReactNode}) {
         const storedUser = await getStoredUser();
         if (storedUser) {
           // Try silent sign-in to get a fresh token instead of using stale stored one
-          const {GoogleSignin} = require('@react-native-google-signin/google-signin');
+          const {
+            GoogleSignin,
+          } = require('@react-native-google-signin/google-signin');
           GoogleSignin.configure({
             webClientId: GOOGLE_WEB_CLIENT_ID,
             offlineAccess: true,
@@ -84,7 +94,9 @@ export function AuthProvider({children}: {children: React.ReactNode}) {
   const signInWithGoogle = useCallback(async () => {
     setIsLoading(true);
     try {
-      const {GoogleSignin} = require('@react-native-google-signin/google-signin');
+      const {
+        GoogleSignin,
+      } = require('@react-native-google-signin/google-signin');
       GoogleSignin.configure({
         webClientId: GOOGLE_WEB_CLIENT_ID,
         offlineAccess: true,
@@ -107,10 +119,7 @@ export function AuthProvider({children}: {children: React.ReactNode}) {
         setIdToken(token);
 
         // Persist
-        await Promise.all([
-          setStoredUser(profile),
-          setStoredIdToken(token),
-        ]);
+        await Promise.all([setStoredUser(profile), setStoredIdToken(token)]);
       }
     } catch (error: any) {
       console.error('Sign in error:', error);
@@ -125,9 +134,11 @@ export function AuthProvider({children}: {children: React.ReactNode}) {
     setIsLoading(true);
     try {
       try {
-        const {GoogleSignin} = require('@react-native-google-signin/google-signin');
+        const {
+          GoogleSignin,
+        } = require('@react-native-google-signin/google-signin');
         await GoogleSignin.signOut();
-      } catch (_e) {
+      } catch {
         // Google SDK may not be configured
       }
       setUser(null);
@@ -144,7 +155,9 @@ export function AuthProvider({children}: {children: React.ReactNode}) {
   const getValidToken = useCallback(async (): Promise<string | null> => {
     if (!user) return null;
 
-    const {GoogleSignin} = require('@react-native-google-signin/google-signin');
+    const {
+      GoogleSignin,
+    } = require('@react-native-google-signin/google-signin');
 
     // Step 1: Try getting current tokens (fast path — works if session is alive)
     try {
@@ -173,14 +186,21 @@ export function AuthProvider({children}: {children: React.ReactNode}) {
         await setStoredIdToken(newToken);
         return newToken;
       }
-    } catch (e) {
+    } catch (e: any) {
       console.warn('Silent sign-in failed:', e);
+      const { statusCodes } = require('@react-native-google-signin/google-signin');
+      // Only sign out if the session is permanently expired or revoked
+      if (e.code === statusCodes.SIGN_IN_REQUIRED) {
+        console.warn('Sign in required, signing out');
+        await signOut();
+        return null;
+      }
     }
 
-    // Step 3: All refresh attempts failed — sign out cleanly
-    console.warn('All token refresh attempts failed, signing out');
-    await signOut();
-    return null;
+    // Step 3: All refresh attempts failed but not due to SIGN_IN_REQUIRED (e.g. offline)
+    // Return the cached token so offline requests can at least try (or queue up)
+    console.warn('Token refresh failed (likely offline), returning cached token');
+    return idToken;
   }, [user, idToken, signOut]);
 
   // ── Register FCM token when authenticated ──────────────────────
@@ -188,7 +208,7 @@ export function AuthProvider({children}: {children: React.ReactNode}) {
     if (!user || !idToken) return;
 
     // Register FCM token with backend
-    const {registerFCMToken, setupTokenRefreshListener} =
+    const { registerFCMToken, setupTokenRefreshListener } =
       require('../services/notifications') as typeof import('../services/notifications');
 
     registerFCMToken(getValidToken);

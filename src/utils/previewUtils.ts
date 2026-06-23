@@ -5,8 +5,12 @@ import ReactNativeBlobUtil from 'react-native-blob-util';
  * Returns all pages (0..totalPages-1) if rangeStr is 'all' or empty.
  */
 export function parsePageRange(rangeStr: string, totalPages: number): number[] {
-  if (!rangeStr || rangeStr.trim() === '' || rangeStr.trim().toLowerCase() === 'all') {
-    return Array.from({length: totalPages}, (_, i) => i);
+  if (
+    !rangeStr ||
+    rangeStr.trim() === '' ||
+    rangeStr.trim().toLowerCase() === 'all'
+  ) {
+    return Array.from({ length: totalPages }, (_, i) => i);
   }
 
   const result: Set<number> = new Set();
@@ -32,14 +36,20 @@ export function parsePageRange(rangeStr: string, totalPages: number): number[] {
   }
 
   const sorted = Array.from(result).sort((a, b) => a - b);
-  return sorted.length > 0 ? sorted : Array.from({length: totalPages}, (_, i) => i);
+  return sorted.length > 0
+    ? sorted
+    : Array.from({ length: totalPages }, (_, i) => i);
 }
 
 /**
  * Get which page indices to display on a given "sheet" of paper.
  * E.g. with pagesPerSheet=4 and sheetIndex=1, returns pages[4..7].
  */
-export function getSheetPages(allPages: number[], pagesPerSheet: number, sheetIndex: number): number[] {
+export function getSheetPages(
+  allPages: number[],
+  pagesPerSheet: number,
+  sheetIndex: number,
+): number[] {
   const start = sheetIndex * pagesPerSheet;
   return allPages.slice(start, start + pagesPerSheet);
 }
@@ -47,7 +57,10 @@ export function getSheetPages(allPages: number[], pagesPerSheet: number, sheetIn
 /**
  * Total number of physical sheets needed to print all selected pages.
  */
-export function getTotalSheets(allPages: number[], pagesPerSheet: number): number {
+export function getTotalSheets(
+  allPages: number[],
+  pagesPerSheet: number,
+): number {
   return Math.max(1, Math.ceil(allPages.length / pagesPerSheet));
 }
 
@@ -65,18 +78,20 @@ export async function generatePdfThumbnails(
   let PdfThumbnail: any = null;
   try {
     PdfThumbnail = require('react-native-pdf-thumbnail').default;
-  } catch (_) {
+  } catch {
     console.warn('react-native-pdf-thumbnail not available');
     return thumbnails;
   }
 
   // Normalize the URI for the native module
   let filePath = uri;
-  
+
   // Handle content:// URIs by copying to cache
   if (filePath.startsWith('content://')) {
     try {
-      const dest = `${ReactNativeBlobUtil.fs.dirs.CacheDir}/thumb_src_${Date.now()}.pdf`;
+      const dest = `${
+        ReactNativeBlobUtil.fs.dirs.CacheDir
+      }/thumb_src_${Date.now()}.pdf`;
       await ReactNativeBlobUtil.fs.cp(filePath, dest);
       filePath = dest;
     } catch (e) {

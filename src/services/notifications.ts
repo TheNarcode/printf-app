@@ -1,7 +1,7 @@
 import messaging from '@react-native-firebase/messaging';
 import { Platform, PermissionsAndroid } from 'react-native';
 
-const API_BASE_URL = 'https://print.aditya.stream';
+import { API_BASE_URL } from './api';
 
 // ── Request notification permission (Android 13+) ───────────────────
 export async function requestNotificationPermission(): Promise<boolean> {
@@ -64,7 +64,7 @@ export async function registerFCMToken(
 export function setupTokenRefreshListener(
   getToken: () => Promise<string | null>,
 ): () => void {
-  return messaging().onTokenRefresh(async (newFcmToken) => {
+  return messaging().onTokenRefresh(async newFcmToken => {
     console.log('FCM token refreshed, re-registering...');
     try {
       const authToken = await getToken();

@@ -5,7 +5,7 @@
  * @format
  */
 
-import React, {useCallback, useEffect, useRef, useState} from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Animated,
   StatusBar,
@@ -13,45 +13,54 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import {SafeAreaProvider} from 'react-native-safe-area-context';
-import {
-  NavigationContainerRef,
-  createNavigationContainerRef,
-} from '@react-navigation/native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { createNavigationContainerRef } from '@react-navigation/native';
 import messaging from '@react-native-firebase/messaging';
-import {ThemeProvider, useTheme} from './src/theme/ThemeContext';
-import {AuthProvider} from './src/context/AuthContext';
-import {PrintJobProvider} from './src/context/PrintJobContext';
+import { ThemeProvider, useTheme } from './src/theme/ThemeContext';
+import { AuthProvider } from './src/context/AuthContext';
+import { PrintJobProvider } from './src/context/PrintJobContext';
 import AppNavigator from './src/navigation/AppNavigator';
-import {Text} from './src/components/Text';
-import type {RootStackParamList} from './src/navigation/AppNavigator';
+import { Text } from './src/components/Text';
+import type { RootStackParamList } from './src/navigation/AppNavigator';
+import { Bell } from 'lucide-react-native';
+import { moderateScale } from './src/utils/responsive';
 
 // Navigation ref — allows navigating from outside React components
 export const navigationRef = createNavigationContainerRef<RootStackParamList>();
 
 function navigateToOrder(orderId: string) {
   if (navigationRef.isReady()) {
-    navigationRef.navigate('OrderDetail', {orderId});
+    navigationRef.navigate('OrderDetail', { orderId });
   }
 }
 
-import { Bell } from 'lucide-react-native';
-import { scale, moderateScale } from './src/utils/responsive';
-
 // Helper to remove emojis from string
 function stripEmojis(str: string) {
-  return str.replace(/([\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF])/g, '').trim();
+  return str
+    .replace(
+      /([\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF])/g,
+      '',
+    )
+    .trim();
 }
 
 // ── In-app toast for foreground notifications ──────────────────────
 function NotificationToast() {
-  const {colors} = useTheme();
+  const { colors } = useTheme();
   const [visible, setVisible] = useState(false);
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
   const [orderId, setOrderId] = useState<string | null>(null);
   const slideAnim = useRef(new Animated.Value(-150)).current;
   const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const hide = useCallback(() => {
+    Animated.timing(slideAnim, {
+      toValue: -150,
+      duration: 200,
+      useNativeDriver: true,
+    }).start(() => setVisible(false));
+  }, [slideAnim]);
 
   const show = useCallback(
     (t: string, b: string, oid: string | null) => {
@@ -69,18 +78,10 @@ function NotificationToast() {
 
       // Auto-hide after 5 seconds
       if (hideTimer.current) clearTimeout(hideTimer.current);
-      hideTimer.current = setTimeout(() => hide(), 5000);
+      hideTimer.current = setTimeout(hide, 5000);
     },
-    [slideAnim],
+    [slideAnim, hide],
   );
-
-  const hide = useCallback(() => {
-    Animated.timing(slideAnim, {
-      toValue: -150,
-      duration: 200,
-      useNativeDriver: true,
-    }).start(() => setVisible(false));
-  }, [slideAnim]);
 
   const handlePress = useCallback(() => {
     hide();
@@ -89,7 +90,7 @@ function NotificationToast() {
 
   // Listen for foreground FCM messages
   useEffect(() => {
-    const unsubscribe = messaging().onMessage(async (remoteMessage) => {
+    const unsubscribe = messaging().onMessage(async remoteMessage => {
       const t = remoteMessage.notification?.title || 'Notification';
       const b = remoteMessage.notification?.body || '';
       const oid = remoteMessage.data?.orderId as string | undefined;
@@ -107,29 +108,47 @@ function NotificationToast() {
         {
           backgroundColor: colors.card,
           borderColor: colors.border,
-          transform: [{translateY: slideAnim}],
+          transform: [{ translateY: slideAnim }],
         },
-      ]}>
+      ]}
+    >
       <TouchableOpacity
         onPress={handlePress}
         activeOpacity={0.8}
-        style={styles.toastContent}>
-        <View style={[styles.iconContainer, { backgroundColor: colors.primaryBg }]}>
-          <Bell size={moderateScale(18)} color={colors.primary} strokeWidth={2} />
+        style={styles.toastContent}
+      >
+        <View
+          style={[styles.iconContainer, { backgroundColor: colors.primaryBg }]}
+        >
+          <Bell
+            size={moderateScale(18)}
+            color={colors.primary}
+            strokeWidth={2}
+          />
         </View>
         <View style={styles.toastTextContainer}>
-          <Text style={[styles.toastTitle, {color: colors.text}]} numberOfLines={1}>{title}</Text>
+          <Text
+            style={[styles.toastTitle, { color: colors.text }]}
+            numberOfLines={1}
+          >
+            {title}
+          </Text>
           {body ? (
             <Text
-              style={[styles.toastBody, {color: colors.textSecondary}]}
-              numberOfLines={2}>
+              style={[styles.toastBody, { color: colors.textSecondary }]}
+              numberOfLines={2}
+            >
               {body}
             </Text>
           ) : null}
         </View>
         {orderId ? (
-          <View style={[styles.toastActionBtn, { backgroundColor: colors.primary }]}>
-             <Text style={[styles.toastAction, {color: colors.background}]}>View</Text>
+          <View
+            style={[styles.toastActionBtn, { backgroundColor: colors.primary }]}
+          >
+            <Text style={[styles.toastAction, { color: colors.background }]}>
+              View
+            </Text>
           </View>
         ) : null}
       </TouchableOpacity>
@@ -140,11 +159,11 @@ function NotificationToast() {
 import { CustomAlert } from './src/components/CustomAlert';
 
 function AppContent() {
-  const {isDark} = useTheme();
+  const { isDark } = useTheme();
 
   // Handle notification tap when app is in background (not killed)
   useEffect(() => {
-    const unsubscribe = messaging().onNotificationOpenedApp((remoteMessage) => {
+    const unsubscribe = messaging().onNotificationOpenedApp(remoteMessage => {
       const orderId = remoteMessage.data?.orderId as string | undefined;
       if (orderId) {
         setTimeout(() => navigateToOrder(orderId), 500);
@@ -157,7 +176,7 @@ function AppContent() {
   useEffect(() => {
     messaging()
       .getInitialNotification()
-      .then((remoteMessage) => {
+      .then(remoteMessage => {
         if (remoteMessage?.data?.orderId) {
           setTimeout(
             () => navigateToOrder(remoteMessage.data!.orderId as string),
@@ -205,7 +224,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     elevation: 8,
     shadowColor: '#000',
-    shadowOffset: {width: 0, height: 4},
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 8,
     zIndex: 9999,
@@ -248,4 +267,3 @@ const styles = StyleSheet.create({
 });
 
 export default App;
-

@@ -1,23 +1,25 @@
-import React, {memo, useCallback} from 'react';
-import {StyleSheet, TouchableOpacity, View} from 'react-native';
-import {useTheme} from '../theme/ThemeContext';
-import {borderRadius, fontSize, fontWeight, spacing} from '../theme/colors';
-import {Text} from '../components/Text';
+import React, { memo } from 'react';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { useTheme } from '../theme/ThemeContext';
+import { borderRadius, fontSize, spacing } from '../theme/colors';
+import { Text } from '../components/Text';
 
 interface OptionSelectorProps {
   label: string;
-  options: {key: string; label: string}[];
+  options: { key: string; label: string }[];
   selected: string;
   onSelect: (key: string) => void;
 }
 
 const OptionSelector = memo(
-  ({label, options, selected, onSelect}: OptionSelectorProps) => {
-    const {colors} = useTheme();
+  ({ label, options, selected, onSelect }: OptionSelectorProps) => {
+    const { colors } = useTheme();
 
     return (
       <View style={styles.container}>
-        <Text style={[styles.label, {color: colors.textSecondary}]}>{label}</Text>
+        <Text style={[styles.label, { color: colors.textSecondary }]}>
+          {label}
+        </Text>
         <View style={styles.optionsRow}>
           {options.map(opt => {
             const isActive = opt.key === selected;
@@ -28,18 +30,23 @@ const OptionSelector = memo(
                 onPress={() => onSelect(opt.key)}
                 style={[
                   styles.option,
-                  {borderColor: colors.borderLight},
+                  { borderColor: colors.borderLight },
                   isActive && {
                     backgroundColor: colors.primary,
                     borderColor: colors.primary,
                   },
-                ]}>
+                ]}
+              >
                 <Text
                   style={[
                     styles.optionText,
-                    {color: colors.textSecondary},
-                    isActive && {color: '#FFFFFF', fontWeight: fontWeight.semibold},
-                  ]}>
+                    { color: colors.textSecondary },
+                    isActive && {
+                      color: '#FFFFFF',
+                      fontFamily: 'Geist-SemiBold',
+                    },
+                  ]}
+                >
                   {opt.label}
                 </Text>
               </TouchableOpacity>
@@ -57,7 +64,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: fontSize.sm,
-    fontWeight: fontWeight.semibold,
+    fontFamily: 'Geist-SemiBold',
     letterSpacing: 1,
     textTransform: 'uppercase',
   },
@@ -76,7 +83,7 @@ const styles = StyleSheet.create({
   },
   optionText: {
     fontSize: fontSize.md,
-    fontWeight: fontWeight.medium,
+    fontFamily: 'Geist-Medium',
   },
 });
 

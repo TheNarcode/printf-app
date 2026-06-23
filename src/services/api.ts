@@ -4,7 +4,7 @@ import type { PrintSettings } from '../types';
 // The API runs locally — change this to your machine's local IP
 // when running on a physical device (localhost doesn't work from device).
 // For emulator, 10.0.2.2 maps to host machine's localhost.
-const API_BASE_URL = 'https://print.aditya.stream';
+export const API_BASE_URL = 'https://print.aditya.stream';
 
 // ── Settings mapping (App → API/IPP) ───────────────────────────────
 
@@ -14,9 +14,12 @@ function mapColorMode(colorMode: 'color' | 'bw'): string {
 
 function mapSides(sides: 'single' | 'double-long' | 'double-short'): string {
   switch (sides) {
-    case 'double-long': return 'two-sided-long-edge';
-    case 'double-short': return 'two-sided-short-edge';
-    default: return 'one-sided';
+    case 'double-long':
+      return 'two-sided-long-edge';
+    case 'double-short':
+      return 'two-sided-short-edge';
+    default:
+      return 'one-sided';
   }
 }
 
@@ -72,22 +75,39 @@ export function buildPrintConfig(
 
 const API_TIMEOUT_MS = 15000; // 15 seconds
 
-function fetchWithTimeout(url: string, options: RequestInit, timeoutMs = API_TIMEOUT_MS): Promise<Response> {
+function fetchWithTimeout(
+  url: string,
+  options: RequestInit,
+  timeoutMs = API_TIMEOUT_MS,
+): Promise<Response> {
   return new Promise((resolve, reject) => {
     const controller = new AbortController();
     const timer = setTimeout(() => {
       controller.abort();
-      reject(new Error('Request timed out. Please check your connection and try again.'));
+      reject(
+        new Error(
+          'Request timed out. Please check your connection and try again.',
+        ),
+      );
     }, timeoutMs);
 
     fetch(url, { ...options, signal: controller.signal })
-      .then(res => { clearTimeout(timer); resolve(res); })
+      .then(res => {
+        clearTimeout(timer);
+        resolve(res);
+      })
       .catch(err => {
         clearTimeout(timer);
         if (err.name === 'AbortError') {
-          reject(new Error('Request timed out. Please check your connection and try again.'));
+          reject(
+            new Error(
+              'Request timed out. Please check your connection and try again.',
+            ),
+          );
         } else {
-          reject(new Error('Unable to connect right now. Please try again later.'));
+          reject(
+            new Error('Unable to connect right now. Please try again later.'),
+          );
         }
       });
   });
@@ -107,7 +127,7 @@ export async function uploadFile(
       `${API_BASE_URL}/file/create`,
       {
         'Content-Type': 'multipart/form-data',
-        ...(idToken ? {'xxx-auth-token': idToken} : {}),
+        ...(idToken ? { 'xxx-auth-token': idToken } : {}),
       },
       [
         {
@@ -127,7 +147,9 @@ export async function uploadFile(
     return response.json();
   } catch (err: any) {
     if (err.message?.includes('File upload failed')) throw err;
-    throw new Error('Unable to upload file. Please check your connection and try again.');
+    throw new Error(
+      'Unable to upload file. Please check your connection and try again.',
+    );
   }
 }
 
@@ -230,11 +252,16 @@ function reverseMapColor(color: string): 'color' | 'bw' {
   return color === 'Monochrome' ? 'bw' : 'color';
 }
 
-function reverseMapSides(sides: string): 'single' | 'double-long' | 'double-short' {
+function reverseMapSides(
+  sides: string,
+): 'single' | 'double-long' | 'double-short' {
   switch (sides) {
-    case 'two-sided-long-edge': return 'double-long';
-    case 'two-sided-short-edge': return 'double-short';
-    default: return 'single';
+    case 'two-sided-long-edge':
+      return 'double-long';
+    case 'two-sided-short-edge':
+      return 'double-short';
+    default:
+      return 'single';
   }
 }
 
@@ -268,12 +295,22 @@ export function apiOrderToAppOrder(apiOrder: ApiOrder): Order {
         pagesPerSheet: parseInt(f.numberUp, 10) || 1,
         orientation: reverseMapOrientation(f.orientation),
       },
-      price: calculateFilePrice(parsePageRange(f.pageRanges || 'all', pages).length, reverseMapColor(f.color), reverseMapPaperFormat(f.paperFormat), reverseMapSides(f.sides), copies, parseInt(f.numberUp, 10) || 1),
+      price: calculateFilePrice(
+        parsePageRange(f.pageRanges || 'all', pages).length,
+        reverseMapColor(f.color),
+        reverseMapPaperFormat(f.paperFormat),
+        reverseMapSides(f.sides),
+        copies,
+        parseInt(f.numberUp, 10) || 1,
+      ),
     };
   });
 
   const totalPages = filesWithSettings.reduce((s, f) => s + f.file.pages, 0);
-  const totalCopies = filesWithSettings.reduce((s, f) => s + f.settings.copies, 0);
+  const totalCopies = filesWithSettings.reduce(
+    (s, f) => s + f.settings.copies,
+    0,
+  );
   const appStatus = mapApiStatus(apiOrder.status, apiOrder.paid);
 
   return {
@@ -282,7 +319,9 @@ export function apiOrderToAppOrder(apiOrder: ApiOrder): Order {
     createdAt: apiOrder.createdAt,
     files: filesWithSettings,
     totalPrice: apiOrder.amount / 100,
-    convenienceFee: (apiOrder.amount / 100) - filesWithSettings.reduce((s, f) => s + f.price, 0),
+    convenienceFee:
+      apiOrder.amount / 100 -
+      filesWithSettings.reduce((s, f) => s + f.price, 0),
     paymentRequestId: apiOrder.paymentRequestId,
     status: appStatus,
     printerNumber: '--',
@@ -293,4 +332,3 @@ export function apiOrderToAppOrder(apiOrder: ApiOrder): Order {
     estimatedCompletion: undefined,
   };
 }
-
