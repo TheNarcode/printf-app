@@ -106,12 +106,29 @@ export function calculateSpending(
     start = new Date(now.getFullYear(), now.getMonth(), 1);
   }
   const filtered = orders.filter(
-    o => new Date(o.createdAt) >= start && o.status !== 1,
+    o => new Date(o.createdAt) >= start && o.status !== 2,
   );
+  
+  let bwPages = 0;
+  let colorPages = 0;
+  
+  filtered.forEach(o => {
+    o.files.forEach(f => {
+      const totalForFile = f.file.pages * f.settings.copies;
+      if (f.settings.colorMode === 'color') {
+        colorPages += totalForFile;
+      } else {
+        bwPages += totalForFile;
+      }
+    });
+  });
+
   return {
     totalSpent: filtered.reduce((s, o) => s + o.totalPrice, 0),
     orderCount: filtered.length,
     pageCount: filtered.reduce((s, o) => s + o.totalPages, 0),
+    bwPages,
+    colorPages,
   };
 }
 

@@ -19,7 +19,7 @@ import { scale, moderateScale } from '../utils/responsive';
 import { createOrder, buildPrintConfig } from '../services/api';
 import { getFileId } from '../services/fileUploadManager';
 
-const RAZORPAY_KEY = 'rzp_test_StI0D1pMPdbae3';
+import { RAZORPAY_KEY_ID } from '@env';
 
 interface Props {
   navigation: any;
@@ -42,6 +42,18 @@ export default function PaymentScreen({ navigation }: Props) {
 
   const handlePay = useCallback(async () => {
     setIsPaying(true);
+    let didNavigate = false;
+
+    const safeNavigateResult = (params: { success: boolean; reason?: string; orderId?: string }) => {
+      // Clean up context before navigating so we don't set state on unmounted component
+      resetFlow();
+      didNavigate = true;
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'OrderResult', params }],
+      });
+    };
+
     try {
       const token = await getValidToken();
       if (!token) throw new Error('Authentication required');
@@ -71,9 +83,9 @@ export default function PaymentScreen({ navigation }: Props) {
       setStatusText('Opening payment...');
       const RazorpaySDK = require('react-native-razorpay').default;
       const options = {
-        description: 'printf - Print Order',
+        description: `Payment for Print Order ${rpOrder.receipt || rpOrder.localOrderId}`,
         currency: rpOrder.currency || 'INR',
-        key: RAZORPAY_KEY,
+        key: RAZORPAY_KEY_ID,
         amount: rpOrder.amount, // already in paise from API
         name: 'printf',
         order_id: rpOrder.id,
@@ -86,56 +98,37 @@ export default function PaymentScreen({ navigation }: Props) {
 
       await RazorpaySDK.open(options);
 
-      // Step 5: Payment successful — navigate FIRST, then clean up
-      // Navigate immediately to prevent crash from state clearing
-      navigation.reset({
-        index: 0,
-        routes: [
-          {
-            name: 'OrderResult',
-            params: { success: true, orderId: rpOrder.localOrderId },
-          },
-        ],
-      });
-
-      // Clean up and refresh in background (screen is already unmounted)
-      resetFlow();
+      // Step 5: Payment successful
       refreshOrders().catch(() => {});
+      safeNavigateResult({ success: true, orderId: rpOrder.localOrderId });
+
     } catch (err: any) {
       console.error('Payment flow error:', err);
-      const msg = err?.message || '';
-      // Check if user cancelled Razorpay
-      if (err?.code === 2 || msg.includes('cancelled')) {
-        setStatusText('');
-        CustomAlertAPI.alert('Cancelled', 'Payment was cancelled.');
+      const msg = err?.message || err?.description || '';
+      const code = err?.code;
+
+      // Razorpay cancelled/dismissed by user: code 0 (dismissed) or code 2 (cancelled)
+      if (code === 0 || code === 2 || msg.toLowerCase().includes('cancel') || msg.toLowerCase().includes('dismiss')) {
+        safeNavigateResult({ success: false, reason: 'cancelled' });
       } else if (
         msg.includes('Unable to connect') ||
         msg.includes('timed out') ||
-        msg.includes('Unable to upload')
+        msg.includes('Unable to upload') ||
+        msg.includes('network')
       ) {
-        // Network / connection issue — let user retry
-        setStatusText('');
-        CustomAlertAPI.alert(
-          'Connection Error',
-          'Unable to connect right now. Please check your connection and try again.',
-        );
+        safeNavigateResult({ success: false, reason: 'timeout' });
       } else if (msg.includes('Authentication required')) {
-        setStatusText('');
-        CustomAlertAPI.alert(
-          'Session Expired',
-          'Please sign out and sign in again.',
-        );
+        safeNavigateResult({ success: false, reason: 'session' });
       } else {
-        // Actual payment failure — navigate to failure screen
-        navigation.reset({
-          index: 0,
-          routes: [{ name: 'OrderResult', params: { success: false } }],
-        });
-        resetFlow();
+        // Actual payment failure
+        safeNavigateResult({ success: false, reason: 'payment_failed' });
       }
     } finally {
-      setIsPaying(false);
-      setStatusText('');
+      // Only update state if we haven't navigated away (component still mounted)
+      if (!didNavigate) {
+        setIsPaying(false);
+        setStatusText('');
+      }
     }
   }, [items, getValidToken, user, refreshOrders, resetFlow, navigation]);
 

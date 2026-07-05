@@ -1,26 +1,36 @@
 {
   "project_info": {
-    "project_number": "89608920119",
-    "project_id": "printf-fcm",
-    "storage_bucket": "printf-fcm.firebasestorage.app"
+    "project_number": "209639995734",
+    "project_id": "printf-501112",
+    "storage_bucket": "printf-501112.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:89608920119:android:366b00dcca3b5f9138b3b2",
+        "mobilesdk_app_id": "1:209639995734:android:1a72e363a43bcfd72b3ef7",
         "android_client_info": {
           "package_name": "com.printf"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "209639995734-kpnf0gnprh2jrnso22pnlso434ohenm4.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
-          "current_key": "AIzaSyDCw8uKjldexlcMMW2BXa6PR5RHtPXV1Fc"
+          "current_key": "AIzaSyDEelsokLN_Qoles1g0cEDuXLXx8XEK0TQ"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "209639995734-kpnf0gnprh2jrnso22pnlso434ohenm4.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

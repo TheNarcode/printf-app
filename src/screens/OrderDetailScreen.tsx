@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo, useRef } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { Printer } from 'lucide-react-native';
+import { Printer, Lock } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/ThemeContext';
 import { usePrintJob } from '../context/PrintJobContext';
@@ -10,11 +10,13 @@ import { formatCurrency, formatDateTime } from '../utils/formatters';
 import { parsePageRange } from '../utils/previewUtils';
 import type { Order } from '../types';
 import { Text } from '../components/Text';
-import { scale, moderateScale } from '../utils/responsive';
+import { scale, moderateScale, verticalScale } from '../utils/responsive';
+import { TouchableOpacity, ActivityIndicator } from 'react-native';
+import { usePayOrder } from '../hooks/usePayOrder';
 
 interface Props {
   navigation: any;
-  route: { params: { orderId: string } };
+  route: { params: { orderId: string; _payNowTrigger?: boolean } };
 }
 
 // ─── Separator ───────────────────────────────────────────────────────────────
@@ -35,8 +37,8 @@ export default function OrderDetailScreen({ navigation, route }: Props) {
   const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
 
-  const screenBg = isDark ? colors.background : '#E5E7EB';
-  const slipBg = isDark ? '#27272A' : '#FFFFFF';
+  const screenBg = colors.background;
+  const slipBg = isDark ? '#27272A' : '#e0e0e0';;
 
   const { orders, refreshOrders } = usePrintJob();
 
@@ -46,9 +48,7 @@ export default function OrderDetailScreen({ navigation, route }: Props) {
       const now = Date.now();
       if (now - lastRefreshRef.current < 30_000) return;
       lastRefreshRef.current = now;
-      refreshOrders().catch(e =>
-        console.log('Failed to refresh on order details', e),
-      );
+      refreshOrders().catch(() => {});
     }, [refreshOrders]),
   );
 
@@ -57,22 +57,35 @@ export default function OrderDetailScreen({ navigation, route }: Props) {
     [orders, route.params.orderId],
   );
 
+  const { payOrder, isPaying } = usePayOrder();
+
+  React.useEffect(() => {
+    if (order && route.params._payNowTrigger && !isPaying && !order.paid && order.paymentRequestId) {
+       navigation.setParams({ _payNowTrigger: undefined });
+       payOrder(order);
+    }
+  }, [order, route.params._payNowTrigger, isPaying, payOrder, navigation]);
+
   const handleBack = useCallback(() => navigation.goBack(), [navigation]);
 
   // Derived (safe defaults when order is null)
-  const isFailed = order?.status === 1;
-  const isDone = order?.status === 2;
-  const statusLabel = isDone ? 'COMPLETED' : isFailed ? 'FAILED' : 'PENDING';
-  const statusColor = isFailed
+  const isFailed = order?.status === 2;
+  const isDone = order?.status === 1 || order?.status === 3;
+  const statusLabel = order?.status === 3 ? 'COLLECTED' : order?.status === 1 ? 'COMPLETED' : order?.status === 2 ? 'FAILED' : 'PENDING';
+  const statusColor = order?.status === 3
+    ? colors.collected
+    : order?.status === 2
     ? colors.danger
-    : isDone
+    : order?.status === 1
     ? colors.success
     : colors.warning;
-  const statusBg = isFailed
-    ? colors.danger + '18'
-    : isDone
-    ? colors.success + '18'
-    : colors.warning + '18';
+  const statusBg = order?.status === 3
+    ? colors.collectedBorder
+    : order?.status === 2
+    ? colors.dangerBorder
+    : order?.status === 1
+    ? colors.successBorder
+    : colors.warningBorder;
 
   // ── Early return after all hooks ──────────────────────────────────────────
   if (!order) {
@@ -92,13 +105,16 @@ export default function OrderDetailScreen({ navigation, route }: Props) {
 
   return (
     <View style={[styles.container, { backgroundColor: screenBg }]}>
-      <Header title="Order Details" showBack onBack={handleBack} />
-
+      <Header
+        title={order ? `Order#${order.orderRef}` : 'Order Details'}
+        showBack
+        onBack={() => navigation.goBack()}
+      />
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[
           styles.content,
-          { paddingBottom: insets.bottom + scale(32) },
+          { paddingBottom: insets.bottom + scale(100), flexGrow: 1, justifyContent: 'center' },
         ]}
       >
         {/* ── Receipt card ─────────────────────────────────────────── */}
@@ -278,12 +294,12 @@ export default function OrderDetailScreen({ navigation, route }: Props) {
               <Text
                 style={[styles.totalLabel, { color: colors.textSecondary }]}
               >
-                PAID
+                STATUS
               </Text>
               <Text
                 style={[styles.totalValue, { color: colors.textSecondary }]}
               >
-                Online
+                {order.paid ? 'PAID' : 'UNPAID'}
               </Text>
             </View>
 
@@ -314,6 +330,37 @@ export default function OrderDetailScreen({ navigation, route }: Props) {
         </View>
         {/* ── end receipt card ─────────────────────────────────────── */}
       </ScrollView>
+
+      {(!order.paid && order.paymentRequestId) && (
+        <View style={[styles.bottomSection, { paddingBottom: insets.bottom + scale(24), backgroundColor: screenBg }]}>
+          <TouchableOpacity
+            onPress={() => payOrder(order)}
+            disabled={isPaying}
+            activeOpacity={0.7}
+            style={[
+              styles.payBtn,
+              { backgroundColor: colors.primary, borderColor: colors.primary },
+            ]}>
+            {isPaying ? (
+              <ActivityIndicator size="small" color={colors.background} />
+            ) : (
+              <Text style={[styles.payBtnText, { color: colors.background }]}>
+                Pay {formatCurrency(order.totalPrice)}
+              </Text>
+            )}
+          </TouchableOpacity>
+          <View style={styles.securedRow}>
+            <Lock
+              size={moderateScale(10)}
+              color={colors.textMuted}
+              strokeWidth={2}
+            />
+            <Text style={[styles.securedText, { color: colors.textMuted }]}>
+              Secured by Razorpay
+            </Text>
+          </View>
+        </View>
+      )}
     </View>
   );
 }
@@ -496,4 +543,34 @@ const styles = StyleSheet.create({
     marginBottom: scale(3),
   },
   footerSub: { fontFamily: 'GeistMono-Regular', fontSize: moderateScale(11) },
+  bottomSection: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingHorizontal: scale(24),
+    paddingTop: scale(16),
+    alignItems: 'center',
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: '#00000015',
+  },
+  payBtn: {
+    paddingVertical: scale(13),
+    paddingHorizontal: scale(20),
+    borderRadius: scale(8),
+    alignItems: 'center',
+    width: '100%',
+  },
+  payBtnText: {
+    fontSize: moderateScale(15),
+    fontFamily: 'Geist-SemiBold',
+  },
+  securedRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: scale(10),
+    gap: scale(4),
+  },
+  securedText: { fontSize: moderateScale(10), fontFamily: 'Geist-Regular' },
 });

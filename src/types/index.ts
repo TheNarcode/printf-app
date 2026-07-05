@@ -23,7 +23,7 @@ export interface FileWithSettings {
   price: number;
 }
 
-export type OrderStatus = 0 | 1 | 2;
+export type OrderStatus = 0 | 1 | 2 | 3 | 4;
 
 export interface Order {
   id: string;
@@ -33,6 +33,7 @@ export interface Order {
   totalPrice: number;
   convenienceFee: number;
   status: OrderStatus;
+  paid: boolean;
   printerNumber: string;
   printerName: string;
   totalPages: number;
@@ -61,4 +62,6 @@ export interface SpendingSummary {
   totalSpent: number;
   orderCount: number;
   pageCount: number;
+  bwPages: number;
+  colorPages: number;
 }

@@ -518,10 +518,7 @@ export default function SettingsScreen({ navigation }: Props) {
 
       <FlatList
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={[
-          styles.scrollContent,
-          { paddingBottom: insets.bottom + scale(120) },
-        ]}
+        contentContainerStyle={styles.scrollContent}
         data={[{ key: 'content' }]}
         keyExtractor={item => item.key}
         renderItem={() => null}
@@ -567,27 +564,6 @@ export default function SettingsScreen({ navigation }: Props) {
                   PRINT PREVIEW
                 </Text>
                 <View style={styles.previewHeaderRight}>
-                  {isBW && (
-                    <View
-                      style={[
-                        styles.bwBadge,
-                        {
-                          backgroundColor: colors.surface,
-                          borderColor: colors.border,
-                        },
-                      ]}
-                    >
-                      <Info size={moderateScale(10)} color={colors.textMuted} />
-                      <Text
-                        style={[
-                          styles.bwBadgeText,
-                          { color: colors.textSecondary },
-                        ]}
-                      >
-                        B&W
-                      </Text>
-                    </View>
-                  )}
                   <TouchableOpacity
                     onPress={openFullscreen}
                     hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}

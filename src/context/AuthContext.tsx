@@ -6,17 +6,14 @@ import React, {
   useMemo,
   useState,
 } from 'react';
+import auth from '@react-native-firebase/auth';
+import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
 import type { UserProfile } from '../types';
-import {
-  getStoredUser,
-  setStoredUser,
-  getStoredIdToken,
-  setStoredIdToken,
-  clearAllStorage,
-} from '../services/storage';
+import { clearAllStorage } from '../services/storage';
+import { GOOGLE_CLIENT_ID } from '@env';
+import { CustomAlertAPI } from '../components/CustomAlert';
 
-const GOOGLE_WEB_CLIENT_ID =
-  '5347000708-huid8jinh9am79lkn3fvuf8ddisdconv.apps.googleusercontent.com';
+
 
 interface AuthContextValue {
   user: UserProfile | null;
@@ -43,106 +40,91 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [idToken, setIdToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // ── Restore session from storage on mount ───────────────────────
+  // Initialize GoogleSignin only once
   useEffect(() => {
-    (async () => {
-      try {
-        const storedUser = await getStoredUser();
-        if (storedUser) {
-          // Try silent sign-in to get a fresh token instead of using stale stored one
-          const {
-            GoogleSignin,
-          } = require('@react-native-google-signin/google-signin');
-          GoogleSignin.configure({
-            webClientId: GOOGLE_WEB_CLIENT_ID,
-            offlineAccess: true,
-          });
-          try {
-            const response = await GoogleSignin.signInSilently();
-            const freshToken = response?.data?.idToken;
-            if (freshToken) {
-              setUser(storedUser);
-              setIdToken(freshToken);
-              await setStoredIdToken(freshToken);
-            } else {
-              // Silent sign-in returned no token — fall back to stored token
-              const storedToken = await getStoredIdToken();
-              if (storedToken) {
-                setUser(storedUser);
-                setIdToken(storedToken);
-              }
-            }
-          } catch (silentErr) {
-            // Silent sign-in failed — try stored token as last resort
-            console.warn('Silent sign-in on restore failed:', silentErr);
-            const storedToken = await getStoredIdToken();
-            if (storedToken) {
-              setUser(storedUser);
-              setIdToken(storedToken);
-            }
-          }
-        }
-      } catch (e) {
-        console.warn('Failed to restore auth session:', e);
-      } finally {
-        setIsLoading(false);
-      }
-    })();
+    GoogleSignin.configure({
+      webClientId: GOOGLE_CLIENT_ID,
+      offlineAccess: true,
+    });
   }, []);
 
-  // ── Sign in with Google ─────────────────────────────────────────
+  // Listen to Firebase Auth state
+  useEffect(() => {
+    const subscriber = auth().onAuthStateChanged(async (firebaseUser) => {
+      if (firebaseUser) {
+        const profile: UserProfile = {
+          id: firebaseUser.uid,
+          name: firebaseUser.displayName || 'User',
+          email: firebaseUser.email || '',
+          photo: firebaseUser.photoURL || null,
+        };
+        setUser(profile);
+        
+        try {
+          const token = await firebaseUser.getIdToken();
+          setIdToken(token);
+        } catch (e) {
+          console.warn('Failed to get initial token:', e);
+        }
+      } else {
+        setUser(null);
+        setIdToken(null);
+      }
+      setIsLoading(false);
+    });
+    
+    return subscriber; // unsubscribe on unmount
+  }, []);
+
+  // Sign in with Google
   const signInWithGoogle = useCallback(async () => {
     setIsLoading(true);
     try {
-      const {
-        GoogleSignin,
-      } = require('@react-native-google-signin/google-signin');
-      GoogleSignin.configure({
-        webClientId: GOOGLE_WEB_CLIENT_ID,
-        offlineAccess: true,
-      });
-      await GoogleSignin.hasPlayServices();
+      await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
       const response = await GoogleSignin.signIn();
-      const signInData = response?.data;
+      const idToken = response.data?.idToken;
 
-      if (signInData?.user) {
-        const profile: UserProfile = {
-          id: signInData.user.id,
-          name: signInData.user.name || 'User',
-          email: signInData.user.email,
-          photo: signInData.user.photo || null,
-        };
-
-        const token = signInData.idToken || null;
-
-        setUser(profile);
-        setIdToken(token);
-
-        // Persist
-        await Promise.all([setStoredUser(profile), setStoredIdToken(token)]);
+      if (!idToken) {
+        throw new Error('Google Sign-In returned no ID token');
       }
+
+      // Create a Google credential with the token
+      const googleCredential = auth.GoogleAuthProvider.credential(idToken);
+
+      // Sign-in the user with the credential
+      await auth().signInWithCredential(googleCredential);
+      
     } catch (error: any) {
-      console.error('Sign in error:', error);
+      console.error('[Auth] Sign in error:', error);
+      
+      let message = 'An error occurred during Google Sign-In. Please try again.';
+      if (error.code === statusCodes.SIGN_IN_CANCELLED || error.message?.includes('CANCELLED')) {
+        message = 'Sign in was cancelled.';
+      } else if (error.code === statusCodes.IN_PROGRESS) {
+        message = 'Sign in is already in progress.';
+      } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+        message = 'Play Services not available or outdated.';
+      }
+      
+      CustomAlertAPI.alert('Login Failed', message);
       // Don't throw — let the UI stay on login screen
     } finally {
       setIsLoading(false);
     }
   }, []);
 
-  // ── Sign out ────────────────────────────────────────────────────
+  // Sign out
   const signOut = useCallback(async () => {
     setIsLoading(true);
     try {
+      // Sign out from Google (revokes permissions locally)
       try {
-        const {
-          GoogleSignin,
-        } = require('@react-native-google-signin/google-signin');
         await GoogleSignin.signOut();
-      } catch {
-        // Google SDK may not be configured
+      } catch (e) {
+        // Ignore if not signed in via Google
       }
-      setUser(null);
-      setIdToken(null);
+      // Sign out from Firebase
+      await auth().signOut();
       await clearAllStorage();
     } catch (error) {
       console.error('Sign out error:', error);
@@ -151,59 +133,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  // ── Get Valid Token (Refreshes silently if expired) ─────────────
+  // Get Valid Token (Refreshes silently if expired)
   const getValidToken = useCallback(async (): Promise<string | null> => {
-    if (!user) return null;
-
-    const {
-      GoogleSignin,
-    } = require('@react-native-google-signin/google-signin');
-
-    // Step 1: Try getting current tokens (fast path — works if session is alive)
+    const currentUser = auth().currentUser;
+    if (!currentUser) return null;
+    
     try {
-      const tokens = await GoogleSignin.getTokens();
-      if (tokens.idToken) {
-        if (tokens.idToken !== idToken) {
-          setIdToken(tokens.idToken);
-          await setStoredIdToken(tokens.idToken);
-        }
-        return tokens.idToken;
+      // forceRefresh is false by default, it will only refresh if expired
+      const token = await currentUser.getIdToken();
+      if (token !== idToken) {
+        setIdToken(token);
       }
-    } catch (e) {
-      console.warn('getTokens failed, trying silent sign-in:', e);
+      return token;
+    } catch (error) {
+      console.warn('Failed to get valid token:', error);
+      return idToken; // Fallback to current token if offline
     }
+  }, [idToken]);
 
-    // Step 2: Silent re-auth — re-establishes the session without any UI prompt
-    try {
-      GoogleSignin.configure({
-        webClientId: GOOGLE_WEB_CLIENT_ID,
-        offlineAccess: true,
-      });
-      const response = await GoogleSignin.signInSilently();
-      const newToken = response?.data?.idToken;
-      if (newToken) {
-        setIdToken(newToken);
-        await setStoredIdToken(newToken);
-        return newToken;
-      }
-    } catch (e: any) {
-      console.warn('Silent sign-in failed:', e);
-      const { statusCodes } = require('@react-native-google-signin/google-signin');
-      // Only sign out if the session is permanently expired or revoked
-      if (e.code === statusCodes.SIGN_IN_REQUIRED) {
-        console.warn('Sign in required, signing out');
-        await signOut();
-        return null;
-      }
-    }
-
-    // Step 3: All refresh attempts failed but not due to SIGN_IN_REQUIRED (e.g. offline)
-    // Return the cached token so offline requests can at least try (or queue up)
-    console.warn('Token refresh failed (likely offline), returning cached token');
-    return idToken;
-  }, [user, idToken, signOut]);
-
-  // ── Register FCM token when authenticated ──────────────────────
+  // Register FCM token when authenticated
   useEffect(() => {
     if (!user || !idToken) return;
 

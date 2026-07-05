@@ -2,50 +2,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import type {UserProfile, ThemeMode, Order} from '../types';
 
 const KEYS = {
-  AUTH_USER: 'printf_auth_user',
-  AUTH_ID_TOKEN: 'printf_auth_id_token',
   THEME_MODE: 'printf_theme_mode',
   ORDERS: 'printf_orders',
 } as const;
 
 // ── Auth ────────────────────────────────────────────────────────────
-
-export async function getStoredUser(): Promise<UserProfile | null> {
-  try {
-    const json = await AsyncStorage.getItem(KEYS.AUTH_USER);
-    return json ? JSON.parse(json) : null;
-  } catch {
-    return null;
-  }
-}
-
-export async function setStoredUser(user: UserProfile | null): Promise<void> {
-  try {
-    if (user) {
-      await AsyncStorage.setItem(KEYS.AUTH_USER, JSON.stringify(user));
-    } else {
-      await AsyncStorage.removeItem(KEYS.AUTH_USER);
-    }
-  } catch {}
-}
-
-export async function getStoredIdToken(): Promise<string | null> {
-  try {
-    return await AsyncStorage.getItem(KEYS.AUTH_ID_TOKEN);
-  } catch {
-    return null;
-  }
-}
-
-export async function setStoredIdToken(token: string | null): Promise<void> {
-  try {
-    if (token) {
-      await AsyncStorage.setItem(KEYS.AUTH_ID_TOKEN, token);
-    } else {
-      await AsyncStorage.removeItem(KEYS.AUTH_ID_TOKEN);
-    }
-  } catch {}
-}
+// (Auth is now handled natively by @react-native-firebase/auth)
 
 // ── Theme ───────────────────────────────────────────────────────────
 

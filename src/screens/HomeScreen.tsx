@@ -5,13 +5,15 @@ import {
   StyleSheet,
   TouchableOpacity,
   View,
+  useWindowDimensions,
 } from 'react-native';
 import {
   ChevronRight,
-  ClipboardList,
   RefreshCcw,
   CheckCircle2,
   AlertCircle,
+  BanknoteX,
+  Settings,
 } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/ThemeContext';
@@ -59,14 +61,16 @@ export default function HomeScreen({ navigation }: Props) {
     }
   }, [refreshOrders]);
 
-  const recentOrders = orders.slice(0, 3);
+  const { width } = useWindowDimensions();
+  const maxOrders = width > 768 ? 5 : 3;
+  const recentOrders = orders.slice(0, maxOrders);
 
   const counts = useMemo(
     () => ({
-      inProgress: orders.filter(o => o.status === 0).length,
-      completed: orders.filter(o => o.status === 2).length,
-      failed: orders.filter(o => o.status === 1).length,
-      pages: orders.reduce((sum, o) => sum + o.totalPages, 0),
+      paymentPending: orders.filter(o => o.status === 0 && !o.paid).length,
+      inProgress: orders.filter(o => o.status === 0 && o.paid).length,
+      completed: orders.filter(o => o.status === 1).length,
+      failed: orders.filter(o => o.status === 2).length,
     }),
     [orders],
   );
@@ -80,7 +84,7 @@ export default function HomeScreen({ navigation }: Props) {
     navigation.navigate('Upload');
   }, [navigation, resetFlow]);
   const handleOrderPress = useCallback(
-    (order: Order) => navigation.navigate('OrderDetail', { orderId: order.id }),
+    (order: Order & { _payNowTrigger?: boolean }) => navigation.navigate('OrderDetail', { orderId: order.id, _payNowTrigger: order._payNowTrigger }),
     [navigation],
   );
   const handleViewAll = useCallback(
@@ -105,13 +109,13 @@ export default function HomeScreen({ navigation }: Props) {
 
   const stats = [
     {
-      key: 'pages',
-      icon: ClipboardList,
-      count: counts.pages,
-      label: 'Pages Printed',
+      key: 'payment_pending',
+      icon: BanknoteX,
+      count: counts.paymentPending,
+      label: 'Payment Pending',
     },
     {
-      key: 'inProgress',
+      key: 'in_progress',
       icon: RefreshCcw,
       count: counts.inProgress,
       label: 'In Progress',
@@ -120,14 +124,13 @@ export default function HomeScreen({ navigation }: Props) {
       key: 'completed',
       icon: CheckCircle2,
       count: counts.completed,
-      label: 'Completed',
+      label: 'To Collect',
     },
     {
       key: 'failed',
       icon: AlertCircle,
       count: counts.failed,
-      label: 'Alerts',
-      isDanger: true,
+      label: 'Failed',
     },
   ];
 
@@ -136,11 +139,13 @@ export default function HomeScreen({ navigation }: Props) {
       <Header
         showBrand
         rightElement={
-          <ProfileButton
-            userName={user?.name}
-            userPhoto={user?.photo}
+          <TouchableOpacity
+            style={styles.settingsBtn}
             onPress={handleProfile}
-          />
+            activeOpacity={0.7}
+          >
+            <Settings size={moderateScale(20)} color={colors.textMuted} strokeWidth={1.8} />
+          </TouchableOpacity>
         }
       />
 
@@ -188,7 +193,7 @@ export default function HomeScreen({ navigation }: Props) {
                       <View style={styles.statTop}>
                         <s.icon
                           size={moderateScale(16)}
-                          color={s.isDanger ? colors.danger : colors.textMuted}
+                          color={colors.textMuted}
                           strokeWidth={1.8}
                         />
                         <Text
@@ -255,16 +260,22 @@ export default function HomeScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   listContent: { paddingHorizontal: scale(20) },
-  headerSection: { paddingTop: scale(14) },
+  headerSection: { paddingTop: scale(24) },
+  settingsBtn: {
+    padding: scale(8),
+    borderRadius: 999,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   greeting: {
     fontSize: moderateScale(24),
     fontFamily: 'Geist-Bold',
     letterSpacing: -0.5,
-    marginBottom: scale(20),
+    marginBottom: scale(28),
   },
 
-  statsGrid: { gap: scale(8), marginBottom: scale(24) },
-  statsRow: { flexDirection: 'row', gap: scale(8) },
+  statsGrid: { gap: scale(12), marginBottom: scale(32) },
+  statsRow: { flexDirection: 'row', gap: scale(12) },
   statCard: {
     flex: 1,
     padding: scale(14),
@@ -284,8 +295,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: scale(10),
-    marginBottom: scale(10),
+    paddingVertical: scale(12),
+    marginBottom: scale(16),
   },
   sectionTitle: { fontSize: moderateScale(16), fontFamily: 'Geist-SemiBold' },
   viewAllBtn: { flexDirection: 'row', alignItems: 'center', gap: 2 },

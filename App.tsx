@@ -22,7 +22,7 @@ import { PrintJobProvider } from './src/context/PrintJobContext';
 import AppNavigator from './src/navigation/AppNavigator';
 import { Text } from './src/components/Text';
 import type { RootStackParamList } from './src/navigation/AppNavigator';
-import { Bell } from 'lucide-react-native';
+import { Bell, X } from 'lucide-react-native';
 import { moderateScale } from './src/utils/responsive';
 
 // Navigation ref — allows navigating from outside React components
@@ -142,15 +142,13 @@ function NotificationToast() {
             </Text>
           ) : null}
         </View>
-        {orderId ? (
-          <View
-            style={[styles.toastActionBtn, { backgroundColor: colors.primary }]}
-          >
-            <Text style={[styles.toastAction, { color: colors.background }]}>
-              View
-            </Text>
-          </View>
-        ) : null}
+        <TouchableOpacity
+          onPress={() => setVisible(false)}
+          activeOpacity={0.7}
+          style={{ padding: moderateScale(4) }}
+        >
+          <X size={moderateScale(18)} color={colors.textMuted} />
+        </TouchableOpacity>
       </TouchableOpacity>
     </Animated.View>
   );

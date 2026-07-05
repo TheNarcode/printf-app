@@ -53,8 +53,6 @@ export async function registerFCMToken(
       },
       body: JSON.stringify({ token: fcmToken }),
     });
-
-    console.log('FCM token registered with backend');
   } catch (err) {
     console.error('FCM registration failed:', err);
   }
@@ -65,7 +63,6 @@ export function setupTokenRefreshListener(
   getToken: () => Promise<string | null>,
 ): () => void {
   return messaging().onTokenRefresh(async newFcmToken => {
-    console.log('FCM token refreshed, re-registering...');
     try {
       const authToken = await getToken();
       if (!authToken) return;
@@ -89,6 +86,5 @@ export function setupTokenRefreshListener(
 // The OS automatically shows the notification from the `notification` payload.
 // We just need to return a promise so Firebase knows we handled it.
 export function backgroundMessageHandler(remoteMessage: any): Promise<void> {
-  console.log('Background FCM message:', remoteMessage?.data);
   return Promise.resolve();
 }

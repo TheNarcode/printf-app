@@ -93,25 +93,41 @@ const OrderCard = memo(
               >
                 {order.orderRef}
               </Text>
-              <View
-                style={[
-                  styles.badge,
-                  {
-                    backgroundColor: statusStyle.bg,
-                    borderColor: statusStyle.border,
-                  },
-                ]}
-              >
+              {(!order.paid && order.paymentRequestId) ? (
                 <View
                   style={[
-                    styles.badgeDot,
-                    { backgroundColor: statusStyle.dot },
+                    styles.badge,
+                    {
+                      backgroundColor: colors.warningBg,
+                      borderColor: colors.warning,
+                    },
                   ]}
-                />
-                <Text style={[styles.badgeText, { color: statusStyle.text }]}>
-                  {statusStyle.label}
-                </Text>
-              </View>
+                >
+                  <Text style={[styles.badgeText, { color: colors.warning }]}>
+                    PAY NOW
+                  </Text>
+                </View>
+              ) : (
+                <View
+                  style={[
+                    styles.badge,
+                    {
+                      backgroundColor: statusStyle.bg,
+                      borderColor: statusStyle.border,
+                    },
+                  ]}
+                >
+                  <View
+                    style={[
+                      styles.badgeDot,
+                      { backgroundColor: statusStyle.dot },
+                    ]}
+                  />
+                  <Text style={[styles.badgeText, { color: statusStyle.text }]}>
+                    {statusStyle.label}
+                  </Text>
+                </View>
+              )}
             </View>
 
             <View style={styles.homeBottomRow}>
@@ -131,11 +147,13 @@ const OrderCard = memo(
     }
 
     // List Variant (All Orders page)
-    const isFailed = order.status === 1;
+    const isFailed = order.status === 2;
     const listBadgeStyle = isFailed
       ? { bg: colors.dangerBg, text: colors.danger, label: 'Failed' }
-      : order.status === 2
+      : order.status === 1
       ? { bg: colors.successBg, text: colors.success, label: 'Completed' }
+      : order.status === 3
+      ? { bg: colors.collectedBg, text: colors.collected, label: 'Collected' }
       : { bg: colors.warningBg, text: colors.warning, label: 'Pending' };
 
     return (
@@ -165,18 +183,35 @@ const OrderCard = memo(
               >
                 {order.orderRef}
               </Text>
-              <View
-                style={[
-                  styles.listBadge,
-                  { backgroundColor: listBadgeStyle.bg },
-                ]}
-              >
-                <Text
-                  style={[styles.listBadgeText, { color: listBadgeStyle.text }]}
+              {(!order.paid && order.paymentRequestId) ? (
+                <View
+                  style={[
+                    styles.listBadge,
+                    {
+                      backgroundColor: colors.warningBg,
+                      borderWidth: 1,
+                      borderColor: colors.warning,
+                    },
+                  ]}
                 >
-                  {listBadgeStyle.label}
-                </Text>
-              </View>
+                  <Text style={[styles.listBadgeText, { color: colors.warning }]}>
+                    PAY NOW
+                  </Text>
+                </View>
+              ) : (
+                <View
+                  style={[
+                    styles.listBadge,
+                    { backgroundColor: listBadgeStyle.bg },
+                  ]}
+                >
+                  <Text
+                    style={[styles.listBadgeText, { color: listBadgeStyle.text }]}
+                  >
+                    {listBadgeStyle.label}
+                  </Text>
+                </View>
+              )}
             </View>
             <Text style={[styles.listMeta, { color: colors.textMuted }]}>
               {order.totalCopies} Copies • {formatDateTime(order.createdAt)}
@@ -271,7 +306,7 @@ const styles = StyleSheet.create({
   listBadge: {
     paddingVertical: scale(3),
     paddingHorizontal: scale(7),
-    borderRadius: scale(6),
+    borderRadius: scale(100),
   },
   listBadgeText: { fontSize: moderateScale(10), fontFamily: 'Geist-Medium' },
   listMeta: { fontSize: moderateScale(12) },

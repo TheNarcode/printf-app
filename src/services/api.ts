@@ -4,7 +4,7 @@ import type { PrintSettings } from '../types';
 // The API runs locally — change this to your machine's local IP
 // when running on a physical device (localhost doesn't work from device).
 // For emulator, 10.0.2.2 maps to host machine's localhost.
-export const API_BASE_URL = 'https://print.aditya.stream';
+export const API_BASE_URL = 'https://printfs.thenarcode.workers.dev';
 
 // ── Settings mapping (App → API/IPP) ───────────────────────────────
 
@@ -216,6 +216,7 @@ export interface ApiOrder {
   paid: boolean;
   status: number;
   createdAt: string;
+  printerName?: string;
   files: ApiFile[];
 }
 
@@ -245,6 +246,7 @@ function mapApiStatus(status: number, paid: boolean): OrderStatus {
   if (!paid) return 0;
   if (status === 1) return 1;
   if (status === 2) return 2;
+  if (status === 3) return 3;
   return 0;
 }
 
@@ -324,11 +326,12 @@ export function apiOrderToAppOrder(apiOrder: ApiOrder): Order {
       filesWithSettings.reduce((s, f) => s + f.price, 0),
     paymentRequestId: apiOrder.paymentRequestId,
     status: appStatus,
+    paid: apiOrder.paid,
     printerNumber: '--',
-    printerName: 'Assigned on print',
+    printerName: apiOrder.printerName || 'Assigned on print',
     totalPages,
     totalCopies,
-    progress: appStatus === 2 ? 100 : 0,
+    progress: appStatus === 1 ? 50 : appStatus === 3 ? 100 : appStatus === 2 ? 100 : 0,
     estimatedCompletion: undefined,
   };
 }

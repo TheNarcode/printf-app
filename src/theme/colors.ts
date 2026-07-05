@@ -69,6 +69,9 @@ export const lightColors = {
   warningBorder: 'rgba(217,119,6,0.18)',
   shimmer: 'rgba(24,24,27,0.02)',
   shadow: '#A1A1AA',
+  collected: '#9333EA',
+  collectedBg: 'rgba(147,51,234,0.08)',
+  collectedBorder: 'rgba(147,51,234,0.20)',
 };
 
 export type ThemeColors = typeof lightColors;
@@ -99,4 +102,7 @@ export const darkColors: ThemeColors = {
   warningBorder: 'rgba(245,158,11,0.25)',
   shimmer: 'rgba(244,244,245,0.03)',
   shadow: '#000000',
+  collected: '#A855F7',
+  collectedBg: 'rgba(168,85,247,0.10)',
+  collectedBorder: 'rgba(168,85,247,0.25)',
 };

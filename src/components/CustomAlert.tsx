@@ -75,8 +75,7 @@ export function CustomAlert() {
                       style={[
                         styles.button,
                         isCancel && { backgroundColor: 'transparent' },
-                        !isCancel && !isDestructive && { backgroundColor: colors.primary },
-                        isDestructive && { backgroundColor: colors.danger },
+                        !isCancel && { backgroundColor: colors.primary },
                       ]}
                       onPress={() => {
                         hide();
@@ -88,7 +87,7 @@ export function CustomAlert() {
                       <Text style={[
                         styles.buttonText,
                         isCancel && { color: colors.textSecondary },
-                        (!isCancel || isDestructive) && { color: colors.background }
+                        !isCancel && { color: colors.background }
                       ]}>
                         {btn.text}
                       </Text>

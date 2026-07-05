@@ -1,6 +1,7 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState, useEffect } from 'react';
 import {
   FlatList,
+  Pressable,
   RefreshControl,
   StyleSheet,
   TextInput,
@@ -8,7 +9,7 @@ import {
   View,
 } from 'react-native';
 import { CustomAlertAPI } from '../components/CustomAlert';
-import { Search } from 'lucide-react-native';
+import { Search, ListFilter, Check } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/ThemeContext';
 import { usePrintJob } from '../context/PrintJobContext';
@@ -23,13 +24,15 @@ interface Props {
   route?: { params?: { filter?: string } };
 }
 
-type Filter = 'all' | 'pending' | 'completed' | 'failed';
+type Filter = 'all' | 'in_progress' | 'payment_pending' | 'cancelled' | 'collected' | 'failed';
 
 const FILTERS: { key: Filter; label: string }[] = [
-  { key: 'all', label: 'All' },
-  { key: 'pending', label: 'Pending' },
-  { key: 'completed', label: 'Completed' },
-  { key: 'failed', label: 'Failed' },
+  { key: 'all', label: 'All orders' },
+  { key: 'in_progress', label: 'In progress' },
+  { key: 'payment_pending', label: 'Payment pending' },
+  { key: 'cancelled', label: 'Cancelled' },
+  { key: 'collected', label: 'Collected' },
+  { key: 'failed', label: 'Failed' }
 ];
 
 function OrderSeparator() {
@@ -58,26 +61,55 @@ export default function AllOrdersScreen({ navigation, route }: Props) {
 
   const initialFilter = useMemo(() => {
     const f = route?.params?.filter;
-    if (f === 'inProgress' || f === 'pending') return 'pending';
-    if (f === 'completed') return 'completed';
-    if (f === 'failed') return 'failed';
-    return 'all';
+    if (f === 'payment_pending') return ['payment_pending'] as Filter[];
+    if (f === 'in_progress') return ['in_progress'] as Filter[];
+    if (f === 'cancelled') return ['cancelled'] as Filter[];
+    if (f === 'failed') return ['failed'] as Filter[];
+    if (f === 'collected') return ['collected'] as Filter[];
+    return ['all'] as Filter[];
   }, [route?.params?.filter]);
 
-  const [filter, setFilter] = useState<Filter>(initialFilter);
+  const [selectedFilters, setSelectedFilters] = useState<Filter[]>(initialFilter);
   const [search, setSearch] = useState('');
+  const [showDropdown, setShowDropdown] = useState(false);
+
+  // Sync with nav params
+  useEffect(() => {
+    const f = route?.params?.filter;
+    if (f === 'payment_pending') setSelectedFilters(['payment_pending']);
+    else if (f === 'in_progress') setSelectedFilters(['in_progress']);
+    else if (f === 'cancelled') setSelectedFilters(['cancelled']);
+    else if (f === 'failed') setSelectedFilters(['failed']);
+    else if (f === 'collected') setSelectedFilters(['collected']);
+    else setSelectedFilters(['all']);
+  }, [route?.params?.filter]);
+
+  const toggleFilter = useCallback((f: Filter) => {
+    setSelectedFilters(prev => {
+      if (f === 'all') return ['all'];
+      const next = prev.filter(x => x !== 'all');
+      if (next.includes(f)) {
+        const removed = next.filter(x => x !== f);
+        return removed.length === 0 ? ['all'] : removed;
+      }
+      return [...next, f];
+    });
+  }, []);
 
   const filteredOrders = useMemo(() => {
     let result = orders;
-    if (filter !== 'all') {
-      if (filter === 'pending') {
-        result = result.filter(o => o.status === 0);
-      } else if (filter === 'completed') {
-        result = result.filter(o => o.status === 2);
-      } else if (filter === 'failed') {
-        result = result.filter(o => o.status === 1);
-      }
+    
+    if (!selectedFilters.includes('all')) {
+      result = result.filter(o => {
+        if (selectedFilters.includes('payment_pending') && !o.paid) return true;
+        if (selectedFilters.includes('in_progress') && o.status === 0 && o.paid) return true;
+        if (selectedFilters.includes('cancelled') && o.status === 4) return true;
+        if (selectedFilters.includes('failed') && o.status === 2) return true;
+        if (selectedFilters.includes('collected') && o.status === 3) return true;
+        return false;
+      });
     }
+    
     if (search.trim()) {
       const q = search.toLowerCase();
       result = result.filter(o =>
@@ -85,12 +117,12 @@ export default function AllOrdersScreen({ navigation, route }: Props) {
       );
     }
     return result;
-  }, [orders, filter, search]);
+  }, [orders, selectedFilters, search]);
 
   const handleBack = useCallback(() => navigation.goBack(), [navigation]);
   const handleOrderPress = useCallback(
-    (order: Order) => {
-      navigation.navigate('OrderDetail', { orderId: order.id });
+    (order: Order & { _payNowTrigger?: boolean }) => {
+      navigation.navigate('OrderDetail', { orderId: order.id, _payNowTrigger: order._payNowTrigger });
     },
     [navigation],
   );
@@ -104,66 +136,68 @@ export default function AllOrdersScreen({ navigation, route }: Props) {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <Header title="Orders" showBack onBack={handleBack} />
+      {showDropdown && (
+        <Pressable 
+          style={[StyleSheet.absoluteFill, { zIndex: 5 }]} 
+          onPress={() => setShowDropdown(false)} 
+        />
+      )}
+      <Header title="All Orders" showBack onBack={handleBack} />
 
-      <View style={styles.headerSection}>
-        <Text style={[styles.headerTitle, { color: colors.text }]}>Orders</Text>
-        <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>
-          Manage and track your print jobs.
-        </Text>
+      <View style={[styles.headerSection, { zIndex: 10 }]}>
+        <Text style={[styles.headerTitle, { color: colors.text, marginBottom: scale(14) }]}>Manage and track orders</Text>
 
-        <View
-          style={[
-            styles.searchBox,
-            { backgroundColor: colors.surface, borderColor: colors.border },
-          ]}
-        >
-          <Search
-            size={moderateScale(16)}
-            color={colors.textMuted}
-            strokeWidth={2}
-          />
-          <TextInput
-            style={[styles.searchInput, { color: colors.text }]}
-            placeholder="Search orders by file name..."
-            placeholderTextColor={colors.textMuted}
-            value={search}
-            onChangeText={setSearch}
-            autoCapitalize="none"
-          />
-        </View>
-
-        <View style={styles.filterRow}>
-          {FILTERS.map(f => {
-            const active = filter === f.key;
-            return (
-              <TouchableOpacity
-                key={f.key}
-                onPress={() => setFilter(f.key)}
-                style={[
-                  styles.filterChip,
-                  { borderColor: colors.border },
-                  active && {
-                    backgroundColor: colors.primary,
-                    borderColor: colors.primary,
-                  },
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.filterText,
-                    { color: colors.textSecondary },
-                    active && {
-                      color: colors.background,
-                      fontFamily: 'Geist-Bold',
-                    },
-                  ]}
-                >
-                  {f.label}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: scale(8), marginBottom: scale(14), zIndex: 10 }}>
+          <View
+            style={[
+              styles.searchBox,
+              { backgroundColor: colors.surface, borderColor: colors.border, flex: 1, marginBottom: 0 },
+            ]}
+          >
+            <Search
+              size={moderateScale(16)}
+              color={colors.textMuted}
+              strokeWidth={2}
+            />
+            <TextInput
+              style={[styles.searchInput, { color: colors.text }]}
+              placeholder="Search orders..."
+              placeholderTextColor={colors.textMuted}
+              value={search}
+              onChangeText={setSearch}
+              autoCapitalize="none"
+            />
+          </View>
+          <TouchableOpacity
+            style={[
+              styles.filterBtn,
+              { backgroundColor: colors.surface, borderColor: colors.border },
+            ]}
+            onPress={() => setShowDropdown(!showDropdown)}
+            activeOpacity={0.7}
+          >
+            <ListFilter size={moderateScale(18)} color={!selectedFilters.includes('all') ? colors.primary : colors.text} />
+          </TouchableOpacity>
+          
+          {showDropdown && (
+            <View style={[styles.dropdown, { backgroundColor: colors.card, borderColor: colors.border, shadowColor: colors.text }]}>
+              {FILTERS.map(f => {
+                const active = selectedFilters.includes(f.key);
+                return (
+                  <TouchableOpacity
+                    key={f.key}
+                    style={styles.dropdownItem}
+                    onPress={() => toggleFilter(f.key)}
+                  >
+                    <View style={[styles.checkbox, { borderColor: colors.border }, active && { backgroundColor: colors.primary, borderColor: colors.primary }]}>
+                      {active && <Check size={moderateScale(12)} color={colors.background} strokeWidth={3} />}
+                    </View>
+                    <Text style={[styles.dropdownItemText, { color: colors.text }]}>{f.label}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          )}
         </View>
       </View>
 
@@ -214,7 +248,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: scale(8),
     paddingHorizontal: scale(12),
-    paddingVertical: scale(9),
+    height: scale(42),
     marginBottom: scale(14),
   },
   searchInput: {
@@ -223,14 +257,42 @@ const styles = StyleSheet.create({
     padding: 0,
     fontFamily: 'Geist-Regular',
   },
-  filterRow: { flexDirection: 'row', gap: scale(6), flexWrap: 'wrap' },
-  filterChip: {
-    paddingVertical: scale(7),
-    paddingHorizontal: scale(14),
-    borderRadius: scale(100),
+  filterBtn: {
+    width: scale(42),
+    height: scale(42),
+    borderRadius: scale(8),
     borderWidth: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  filterText: { fontSize: moderateScale(12), fontFamily: 'Geist-Medium' },
+  dropdown: {
+    position: 'absolute',
+    top: scale(50),
+    right: 0,
+    width: scale(180),
+    borderRadius: scale(10),
+    borderWidth: 1,
+    paddingVertical: scale(6),
+  },
+  dropdownItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: scale(10),
+    paddingVertical: scale(10),
+    paddingHorizontal: scale(14),
+  },
+  checkbox: {
+    width: scale(16),
+    height: scale(16),
+    borderRadius: scale(4),
+    borderWidth: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  dropdownItemText: {
+    fontSize: moderateScale(14),
+    fontFamily: 'Geist-Medium',
+  },
   listContent: { paddingHorizontal: scale(20) },
   emptyState: { paddingVertical: scale(48), alignItems: 'center' },
   emptyText: { fontSize: moderateScale(14) },

@@ -53,7 +53,7 @@ export default function ProfileScreen({ navigation }: Props) {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <Header title="Profile" showBack onBack={handleBack} />
+      <Header title="Settings" showBack onBack={handleBack} />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
