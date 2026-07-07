@@ -12,7 +12,7 @@ import { useTheme } from '../theme/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import { usePrintJob } from '../context/PrintJobContext';
 import { useNetwork } from '../context/NetworkContext';
-import { CustomAlertAPI } from '../components/CustomAlert';
+
 import Header from '../components/Header';
 import { formatCurrency, formatFileSize } from '../utils/formatters';
 import { Text } from '../components/Text';
@@ -29,7 +29,7 @@ interface Props {
 export default function PaymentScreen({ navigation }: Props) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
-  const { getOrderSummary, refreshOrders, resetFlow } = usePrintJob();
+  const { getOrderSummary, refreshOrders, resetFlow, files } = usePrintJob();
   const { getValidToken, user } = useAuth();
   const { assertOnline } = useNetwork();
   const [isPaying, setIsPaying] = useState(false);
@@ -61,11 +61,10 @@ export default function PaymentScreen({ navigation }: Props) {
       const token = await getValidToken();
       if (!token) throw new Error('Authentication required');
 
-      // Step 1: Wait for background uploads to complete
       setStatusText('Preparing files...');
       const fileIds: Record<string, string> = {};
       for (const item of items) {
-        fileIds[item.file.id] = await getFileId(item.file.id);
+        fileIds[item.file.id] = getFileId(item.file.id);
       }
 
       // Step 2: Build PrintConfig payloads
@@ -344,7 +343,7 @@ export default function PaymentScreen({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  content: { paddingHorizontal: scale(20), paddingTop: scale(16) },
+  content: { paddingHorizontal: scale(20), paddingTop: scale(24) },
   section: { marginBottom: scale(24) },
   sectionLabel: {
     fontSize: moderateScale(10),

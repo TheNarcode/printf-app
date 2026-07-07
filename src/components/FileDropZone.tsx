@@ -21,9 +21,9 @@ const FileDropZone = memo(({onBrowse}: FileDropZoneProps) => {
         <View style={[styles.iconCircle, {backgroundColor: colors.primaryBg}]}>
           <CloudUpload size={moderateScale(24)} color={colors.textSecondary} strokeWidth={1.5} />
         </View>
-        <Text style={[styles.title, {color: colors.text}]}>Tap to upload files</Text>
+        <Text style={[styles.title, {color: colors.text}]}>Upload files here</Text>
         <Text style={[styles.subtitle, {color: colors.textMuted}]}>
-          PDF, DOC, DOCX, JPG, PNG supported
+          PDF, JPEG, JPG, PNG supported
         </Text>
       </TouchableOpacity>
     </View>

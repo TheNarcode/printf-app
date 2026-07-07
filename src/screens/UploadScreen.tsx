@@ -123,7 +123,7 @@ const styles = StyleSheet.create({
   listContent: { paddingHorizontal: scale(20), paddingBottom: scale(32) },
   bottomBar: {
     paddingHorizontal: scale(20),
-    paddingTop: scale(16),
+    paddingTop: scale(24),
     borderTopWidth: StyleSheet.hairlineWidth,
     gap: scale(10),
   },

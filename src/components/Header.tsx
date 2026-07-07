@@ -37,13 +37,14 @@ const Header = memo(
     return (
       <View
         style={[
-          styles.container,
+          styles.wrapper,
           {
             paddingTop: insets.top + scale(6),
-            borderBottomColor: colors.border,
+            backgroundColor: colors.background,
           },
         ]}
       >
+        <View style={[styles.inner, { borderBottomColor: colors.border }]}>
         <View style={styles.left}>
           {showBack && (
             <TouchableOpacity
@@ -101,18 +102,22 @@ const Header = memo(
             </TouchableOpacity>
           )}
         </View>
+        </View>
       </View>
     );
   },
 );
 
 const styles = StyleSheet.create({
-  container: {
+  wrapper: {
+    paddingHorizontal: scale(20),
+  },
+  inner: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: scale(20),
     paddingBottom: scale(10),
+    borderBottomWidth: 1,
   },
   left: { flexDirection: 'row', alignItems: 'center', gap: scale(10), flex: 1 },
   right: { flexDirection: 'row', alignItems: 'center', gap: scale(8) },

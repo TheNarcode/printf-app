@@ -90,8 +90,8 @@ const SpendingSummary = memo(({orders}: SpendingSummaryProps) => {
 
 const styles = StyleSheet.create({
   container: {borderRadius: scale(14), borderWidth: 1, padding: scale(16)},
-  periodRow: {flexDirection: 'row', borderRadius: scale(100), padding: scale(3), marginBottom: scale(20)},
-  periodBtn: {flex: 1, paddingVertical: scale(7), alignItems: 'center', borderRadius: scale(100)},
+  periodRow: {flexDirection: 'row', borderRadius: scale(8), padding: scale(2), marginBottom: scale(20)},
+  periodBtn: {flex: 1, paddingVertical: scale(8), alignItems: 'center', borderRadius: scale(6)},
   periodBtnActive: {
     elevation: 2, shadowColor: '#000',
     shadowOffset: {width: 0, height: 1}, shadowOpacity: 0.1, shadowRadius: 3,

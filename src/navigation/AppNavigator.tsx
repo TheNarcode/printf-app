@@ -22,6 +22,8 @@ import OrderResultScreen from '../screens/OrderResultScreen';
 import OrderDetailScreen from '../screens/OrderDetailScreen';
 import AllOrdersScreen from '../screens/AllOrdersScreen';
 import ProfileScreen from '../screens/ProfileScreen';
+import PrivacyScreen from '../screens/PrivacyScreen';
+import TermsScreen from '../screens/TermsScreen';
 
 export type RootStackParamList = {
   Login: undefined;
@@ -33,6 +35,8 @@ export type RootStackParamList = {
   OrderDetail: { orderId: string };
   AllOrders: { filter?: string } | undefined;
   Profile: undefined;
+  Privacy: undefined;
+  Terms: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -96,11 +100,15 @@ export default function AppNavigator({ navigationRef }: Props) {
             }}
           >
             {!isAuthenticated ? (
-              <Stack.Screen
-                name="Login"
-                component={LoginScreen}
-                options={{ animation: 'none' }}
-              />
+              <>
+                <Stack.Screen
+                  name="Login"
+                  component={LoginScreen}
+                  options={{ animation: 'none' }}
+                />
+                <Stack.Screen name="Privacy" component={PrivacyScreen} />
+                <Stack.Screen name="Terms" component={TermsScreen} />
+              </>
             ) : (
               <>
                 <Stack.Screen name="Home" component={HomeScreen} />
@@ -119,6 +127,8 @@ export default function AppNavigator({ navigationRef }: Props) {
                   component={ProfileScreen}
                   options={{ animation: 'none' }}
                 />
+                <Stack.Screen name="Privacy" component={PrivacyScreen} />
+                <Stack.Screen name="Terms" component={TermsScreen} />
               </>
             )}
           </Stack.Navigator>

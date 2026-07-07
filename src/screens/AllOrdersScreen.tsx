@@ -236,7 +236,7 @@ export default function AllOrdersScreen({ navigation, route }: Props) {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  headerSection: { paddingHorizontal: scale(20), marginBottom: scale(14) },
+  headerSection: { paddingHorizontal: scale(20), paddingTop: scale(24), marginBottom: scale(14) },
   headerTitle: {
     fontSize: moderateScale(26),
     fontFamily: 'Geist-Bold',

@@ -5,6 +5,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   View,
+  Linking,
 } from 'react-native';
 import { CustomAlertAPI } from '../components/CustomAlert';
 import { LogOut, Moon, Sun, Monitor } from 'lucide-react-native';
@@ -155,9 +156,25 @@ export default function ProfileScreen({ navigation }: Props) {
           </View>
         </View>
 
-        <Text style={[styles.version, { color: colors.textMuted }]}>
-          printf v1.0.0
-        </Text>
+        <View style={{ alignItems: 'center', gap: scale(6), marginTop: scale(16) }}>
+          <Text style={{ fontSize: moderateScale(10), fontFamily: 'GeistMono-Regular', letterSpacing: 1.2, textTransform: 'uppercase', color: colors.textMuted, opacity: 0.5 }}>
+            printf v1.0.0
+          </Text>
+          <TouchableOpacity onPress={() => Linking.openURL('https://github.com/thenarcode')} activeOpacity={0.7}>
+            <Text style={{ fontSize: moderateScale(11), fontFamily: 'Geist-Bold', letterSpacing: 0.5, color: colors.text, textDecorationLine: 'underline' }}>
+              The Narcode
+            </Text>
+          </TouchableOpacity>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: scale(12), marginTop: scale(4) }}>
+            <TouchableOpacity onPress={() => navigation.navigate('Terms')} activeOpacity={0.7}>
+              <Text style={{ fontSize: moderateScale(10), fontFamily: 'Geist-Bold', textTransform: 'uppercase', color: colors.textMuted }}>Terms</Text>
+            </TouchableOpacity>
+            <Text style={{ fontSize: moderateScale(10), color: colors.textMuted }}>|</Text>
+            <TouchableOpacity onPress={() => navigation.navigate('Privacy')} activeOpacity={0.7}>
+              <Text style={{ fontSize: moderateScale(10), fontFamily: 'Geist-Bold', textTransform: 'uppercase', color: colors.textMuted }}>Privacy</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
       </ScrollView>
     </View>
   );
@@ -211,8 +228,8 @@ const styles = StyleSheet.create({
   // Theme Pill Bar
   themePillBar: {
     flexDirection: 'row',
-    borderRadius: scale(10),
-    padding: scale(3),
+    borderRadius: scale(8),
+    padding: scale(2),
   },
   themePill: {
     flex: 1,
@@ -220,8 +237,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: scale(5),
-    paddingVertical: scale(10),
-    borderRadius: scale(8),
+    paddingVertical: scale(8),
+    borderRadius: scale(6),
   },
   themePillActive: {
     elevation: 2,

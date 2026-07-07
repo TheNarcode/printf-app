@@ -3,12 +3,16 @@ import { Animated, Easing, ViewStyle } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 
 interface Props {
-  size?: number;
+  size?: number | 'small' | 'large';
   style?: ViewStyle;
 }
 
 export const CustomSpinner: React.FC<Props> = ({ size = 25, style }) => {
   const { colors } = useTheme();
+  
+  // Normalize size for compatibility with ActivityIndicator props if passed
+  const spinnerSize = typeof size === 'number' ? size : size === 'large' ? 32 : 24;
+  
   const spinValue = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -31,9 +35,9 @@ export const CustomSpinner: React.FC<Props> = ({ size = 25, style }) => {
     <Animated.View
       style={[
         {
-          width: size,
-          height: size,
-          borderRadius: size / 2,
+          width: spinnerSize,
+          height: spinnerSize,
+          borderRadius: spinnerSize / 2,
           borderWidth: 2,
           borderColor: colors.primary,
           borderTopColor: 'transparent',

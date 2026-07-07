@@ -30,6 +30,8 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/ThemeContext';
 import { usePrintJob } from '../context/PrintJobContext';
+import { useAuth } from '../context/AuthContext';
+import { useNetwork } from '../context/NetworkContext';
 import Header from '../components/Header';
 import { Text } from '../components/Text';
 import { formatFileSize } from '../utils/formatters';
@@ -39,6 +41,8 @@ import {
   getTotalSheets,
   generatePdfThumbnails,
 } from '../utils/previewUtils';
+import { getStatuses, retryFailed } from '../services/fileUploadManager';
+import { CustomAlertAPI } from '../components/CustomAlert';
 import {
   scale,
   moderateScale,
@@ -140,7 +144,13 @@ function SettingRow({
 export default function SettingsScreen({ navigation }: Props) {
   const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
-  const { files, fileSettings, updateFileSettings } = usePrintJob();
+  const { files, fileSettings, updateFileSettings, resetFlow } = usePrintJob();
+  const { getValidToken } = useAuth();
+  const { assertOnline } = useNetwork();
+
+  // Upload gatekeeper state
+  const [uploadState, setUploadState] = useState<'uploading' | 'done' | 'failed'>('uploading');
+  const alertFiredRef = useRef(false);
 
   const [selectedIdx, setSelectedIdx] = useState(0);
   const [showSidesModal, setShowSidesModal] = useState(false);
@@ -166,10 +176,75 @@ export default function SettingsScreen({ navigation }: Props) {
 
   const handleBack = useCallback(() => navigation.goBack(), [navigation]);
 
+  // Poll upload status every 500ms
+  useEffect(() => {
+    const check = () => {
+      const statuses = getStatuses();
+      const vals = Object.values(statuses);
+      if (vals.length === 0 || vals.every(s => s === 'done')) {
+        setUploadState('done');
+        alertFiredRef.current = false;
+        return;
+      }
+      if (vals.some(s => s === 'error')) { setUploadState('failed'); return; }
+      setUploadState('uploading');
+    };
+    check();
+    const timer = setInterval(check, 500);
+    return () => clearInterval(timer);
+  }, []);
+
+  const showUploadFailedAlert = useCallback(() => {
+    CustomAlertAPI.alert(
+      'Upload Failed',
+      'Some files could not be uploaded. Would you like to try again?',
+      [
+        {
+          text: 'Try Later',
+          style: 'cancel',
+          onPress: () => { 
+            resetFlow();
+            navigation.navigate('Home'); 
+          },
+        },
+        {
+          text: 'Retry',
+          onPress: () => {
+            if (!assertOnline()) return;
+            const uploadableFiles = files.map(f => ({ id: f.id, uri: f.uri, name: f.name, type: f.type }));
+            retryFailed(uploadableFiles, getValidToken);
+            setUploadState('uploading');
+            alertFiredRef.current = false;
+          },
+        },
+      ],
+    );
+  }, [files, assertOnline, getValidToken, navigation]);
+
+  // Auto-fire alert once on failure
+  useEffect(() => {
+    if (uploadState === 'failed' && !alertFiredRef.current) {
+      alertFiredRef.current = true;
+      showUploadFailedAlert();
+    }
+  }, [uploadState, showUploadFailedAlert]);
+
+  // Suppress system/swipe back while upload alert would be re-shown
+  useEffect(() => {
+    if (uploadState !== 'failed') return;
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      // On Android back while failed: re-show alert instead of navigating
+      showUploadFailedAlert();
+      return true;
+    });
+    return () => sub.remove();
+  }, [uploadState, showUploadFailedAlert]);
+
   const handleContinue = useCallback(() => {
-    if (pageRangeError) return;
+    if (uploadState === 'failed') { showUploadFailedAlert(); return; }
+    if (pageRangeError || !assertOnline()) return;
     navigation.navigate('Payment');
-  }, [navigation, pageRangeError]);
+  }, [navigation, pageRangeError, assertOnline, uploadState, showUploadFailedAlert]);
 
   const update = useCallback(
     (key: string, value: any) => {
@@ -319,7 +394,7 @@ export default function SettingsScreen({ navigation }: Props) {
         <View
           style={[
             styles.fileCard,
-            { backgroundColor: colors.card, borderColor: colors.border },
+            { backgroundColor: colors.card, borderColor: item.uploadError ? colors.danger : colors.border },
           ]}
         >
           <View
@@ -339,8 +414,7 @@ export default function SettingsScreen({ navigation }: Props) {
               {item.name}
             </Text>
             <Text style={[styles.fileCardMeta, { color: colors.textMuted }]}>
-              {formatFileSize(item.size)} · {item.pages}{' '}
-              {item.pages === 1 ? 'page' : 'pages'}
+              {formatFileSize(item.size)} · {item.pages} {item.pages === 1 ? 'page' : 'pages'}
             </Text>
           </View>
         </View>
@@ -861,19 +935,29 @@ export default function SettingsScreen({ navigation }: Props) {
         <TouchableOpacity
           onPress={handleContinue}
           activeOpacity={0.8}
-          disabled={!!pageRangeError}
+          disabled={!!pageRangeError || uploadState === 'uploading'}
           style={[
             styles.continueBtn,
             {
-              backgroundColor: pageRangeError
-                ? colors.textMuted
-                : colors.primary,
+              backgroundColor:
+                pageRangeError || uploadState === 'uploading'
+                  ? colors.textMuted
+                  : uploadState === 'failed'
+                  ? colors.danger
+                  : colors.primary,
             },
           ]}
         >
-          <Text style={[styles.continueBtnText, { color: colors.background }]}>
-            Proceed to Payment
-          </Text>
+          {uploadState === 'uploading' ? (
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: scale(8) }}>
+              <ActivityIndicator size="small" color={colors.background} />
+              <Text style={[styles.continueBtnText, { color: colors.background }]}>Uploading…</Text>
+            </View>
+          ) : (
+            <Text style={[styles.continueBtnText, { color: colors.background }]}>
+              {uploadState === 'failed' ? 'Upload Failed ' : 'Proceed to Payment'}
+            </Text>
+          )}
         </TouchableOpacity>
       </View>
 
@@ -1073,7 +1157,7 @@ export default function SettingsScreen({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  scrollContent: { paddingBottom: scale(32) },
+  scrollContent: { paddingBottom: scale(32), paddingTop: scale(24) },
   fileCard: {
     marginHorizontal: scale(20),
     marginTop: scale(12),
@@ -1098,7 +1182,18 @@ const styles = StyleSheet.create({
     fontFamily: 'Geist-SemiBold',
     marginBottom: 2,
   },
-  fileCardMeta: { fontSize: moderateScale(10) },
+  fileCardMeta: { fontSize: moderateScale(11) },
+  retryBtn: {
+    paddingHorizontal: scale(12),
+    paddingVertical: scale(6),
+    borderRadius: scale(6),
+    marginLeft: scale(8),
+  },
+  retryBtnText: {
+    color: '#fff',
+    fontSize: moderateScale(11),
+    fontFamily: 'Geist-Medium',
+  },
   dotsRow: {
     flexDirection: 'row',
     justifyContent: 'center',

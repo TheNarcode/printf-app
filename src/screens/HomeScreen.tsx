@@ -29,6 +29,7 @@ import FAB from '../components/FAB';
 import type { Order } from '../types';
 import { Text } from '../components/Text';
 import { scale, moderateScale } from '../utils/responsive';
+import { useDoubleBackToExit } from '../hooks/useDoubleBackToExit';
 
 interface Props {
   navigation: any;
@@ -48,6 +49,8 @@ export default function HomeScreen({ navigation }: Props) {
   const { user } = useAuth();
   const { assertOnline } = useNetwork();
   const [refreshing, setRefreshing] = useState(false);
+
+  useDoubleBackToExit();
 
   const handleRefresh = useCallback(async () => {
     if (!assertOnline()) return;
@@ -268,7 +271,7 @@ export default function HomeScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   listContent: { paddingHorizontal: scale(20) },
-  headerSection: { paddingTop: scale(12) },
+  headerSection: { paddingTop: scale(24) },
   settingsBtn: {
     padding: scale(8),
     borderRadius: 999,

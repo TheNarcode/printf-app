@@ -5,6 +5,7 @@ import React, {
   useEffect,
   useMemo,
   useState,
+  useRef,
 } from 'react';
 import auth from '@react-native-firebase/auth';
 import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
@@ -91,6 +92,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw new Error('Google Sign-In returned no ID token');
       }
 
+      // Yield to the JS event loop and Native UI thread to let the CustomSpinner 
+      // animation resume smoothly after the Google popup modal closes, before 
+      // the heavy Firebase auth blocks the bridge.
+      await new Promise(resolve => setTimeout(() => resolve(true), 150));
+
       // Create a Google credential with the token
       const googleCredential = auth.GoogleAuthProvider.credential(idToken);
 
@@ -154,20 +160,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [idToken]);
 
-  // Register FCM token when authenticated
+  // Keep a ref to getValidToken so the FCM effect never needs to re-run
+  // just because the token rotated — it always calls the latest version.
+  const getValidTokenRef = useRef(getValidToken);
   useEffect(() => {
-    if (!user || !idToken) return;
+    getValidTokenRef.current = getValidToken;
+  });
 
-    // Register FCM token with backend
+  // Register FCM token only when a user session starts (user.id changes)
+  const userId = user?.id ?? null;
+  useEffect(() => {
+    if (!userId) return;
+
     const { registerFCMToken, setupTokenRefreshListener } =
       require('../services/notifications') as typeof import('../services/notifications');
 
-    registerFCMToken(getValidToken);
-
-    // Listen for token refreshes and re-register
-    const unsubscribe = setupTokenRefreshListener(getValidToken);
+    const stableGetter = () => getValidTokenRef.current();
+    registerFCMToken(stableGetter);
+    const unsubscribe = setupTokenRefreshListener(stableGetter);
     return unsubscribe;
-  }, [user, idToken, getValidToken]);
+  }, [userId]); // only fires on sign-in / sign-out
 
   const value = useMemo(
     () => ({

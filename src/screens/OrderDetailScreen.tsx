@@ -379,12 +379,12 @@ export default function OrderDetailScreen({ navigation, route }: Props) {
 // ─── Styles ───────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  content: { paddingHorizontal: scale(16), paddingTop: scale(16) },
+  content: { paddingHorizontal: scale(16), paddingTop: scale(24) },
   emptyState: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   emptyText: { fontSize: moderateScale(14) },
 
   receiptContainer: {
-    width: scale(320),
+    width: '100%',
     alignSelf: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },

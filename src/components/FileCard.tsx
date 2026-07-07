@@ -45,9 +45,12 @@ const FileCard = memo(({file, onRemove}: FileCardProps) => {
 
 const styles = StyleSheet.create({
   container: {
-    flexDirection: 'row', alignItems: 'center',
-    padding: scale(10), borderRadius: scale(10),
-    borderWidth: 1, gap: scale(10),
+    borderRadius: scale(10),
+    borderWidth: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: scale(10),
+    gap: scale(10),
   },
   iconBox: {
     width: scale(36), height: scale(36), borderRadius: scale(8),
