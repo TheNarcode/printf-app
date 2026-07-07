@@ -49,8 +49,6 @@ export function useFileUpload() {
       const results: DocumentPickerResponse[] = await pick({
         type: [
           types.pdf,
-          types.doc,
-          types.docx,
           types.images,
         ],
         allowMultiSelection: true,

@@ -38,28 +38,40 @@ export default function UploadScreen({ navigation }: Props) {
     const picked = await pickFiles();
     if (picked.length > 0) {
       const unique: UploadedFile[] = [];
-      const skippedNames: string[] = [];
+      const largeFiles: string[] = [];
+      const duplicateFiles: string[] = [];
 
       for (const p of picked) {
         if (p.size > 50 * 1024 * 1024) {
-          skippedNames.push(`${p.name} (Too large)`);
+          largeFiles.push(p.name);
           continue;
         }
 
         const isDuplicate = files.some(f => f.name === p.name && f.size === p.size) ||
                             unique.some(f => f.name === p.name && f.size === p.size);
         if (isDuplicate) {
-          skippedNames.push(p.name);
+          duplicateFiles.push(p.name);
         } else {
           unique.push(p);
         }
       }
 
       if (unique.length > 0) addFiles(unique);
-      if (skippedNames.length > 0) {
+      
+      if (largeFiles.length > 0 && duplicateFiles.length > 0) {
         CustomAlertAPI.alert(
-          'Some Files Skipped',
-          `The following files were skipped (duplicates or >50MB):\n${skippedNames.join(', ')}`
+          'File Selection Notice',
+          `We skipped some files to keep your queue running smoothly:\n\n• ${largeFiles.length} ${largeFiles.length === 1 ? 'file' : 'files'} exceeded the 50MB limit\n• ${duplicateFiles.length} ${duplicateFiles.length === 1 ? 'file was' : 'files were'} already added`
+        );
+      } else if (largeFiles.length > 0) {
+        CustomAlertAPI.alert(
+          'File Too Large',
+          `Our maximum file size is 50MB to ensure reliable processing. ${largeFiles.length === 1 ? '1 file was' : `${largeFiles.length} files were`} skipped. Please compress and try again.`
+        );
+      } else if (duplicateFiles.length > 0) {
+        CustomAlertAPI.alert(
+          'Already in Queue',
+          `You've already added ${duplicateFiles.length === 1 ? 'this file' : 'some of these files'}! We've skipped the ${duplicateFiles.length === 1 ? 'duplicate' : 'duplicates'} to keep your print order organized.`
         );
       }
     }
