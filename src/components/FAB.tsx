@@ -19,7 +19,7 @@ const FAB = memo(({onPress}: FABProps) => {
       activeOpacity={0.85}
       style={[
         styles.fab,
-        {backgroundColor: colors.primary, bottom: insets.bottom + scale(28)},
+        {backgroundColor: colors.primary, bottom: insets.bottom + scale(36)},
       ]}>
       <Plus size={moderateScale(22)} color={colors.background} strokeWidth={2.5} />
     </TouchableOpacity>
@@ -29,7 +29,7 @@ const FAB = memo(({onPress}: FABProps) => {
 const styles = StyleSheet.create({
   fab: {
     position: 'absolute',
-    right: scale(20),
+    right: scale(28),
     width: scale(52),
     height: scale(52),
     borderRadius: scale(14),

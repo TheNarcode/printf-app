@@ -358,15 +358,6 @@ export default function SettingsScreen({ navigation }: Props) {
   const openFullscreen = useCallback(() => setShowFullscreen(true), []);
   const closeFullscreen = useCallback(() => setShowFullscreen(false), []);
 
-  // Close fullscreen modal when Android back button is pressed
-  useEffect(() => {
-    if (!showFullscreen) return;
-    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
-      closeFullscreen();
-      return true; // prevent default back navigation
-    });
-    return () => sub.remove();
-  }, [showFullscreen, closeFullscreen]);
 
   // ── Early return after ALL hooks ──────────────────────────────────────────
   if (!file || !settings) return null;
@@ -887,7 +878,7 @@ export default function SettingsScreen({ navigation }: Props) {
       </View>
 
       {/* FULLSCREEN PREVIEW MODAL */}
-      <Modal visible={showFullscreen} animationType="fade" statusBarTranslucent>
+      <Modal visible={showFullscreen} animationType="fade" statusBarTranslucent onRequestClose={closeFullscreen}>
         <StatusBar
           barStyle={isDark ? 'light-content' : 'dark-content'}
           backgroundColor={colors.background}
@@ -1005,7 +996,7 @@ export default function SettingsScreen({ navigation }: Props) {
       </Modal>
 
       {/* Sides Modal */}
-      <Modal visible={showSidesModal} transparent animationType="fade">
+      <Modal visible={showSidesModal} transparent animationType="fade" onRequestClose={closeSidesModal}>
         <View style={styles.modalOverlay}>
           <TouchableOpacity
             style={styles.modalBgClose}
