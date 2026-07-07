@@ -10,7 +10,7 @@ import { formatCurrency, formatDateTime } from '../utils/formatters';
 import { parsePageRange } from '../utils/previewUtils';
 import type { Order } from '../types';
 import { Text } from '../components/Text';
-import { scale, moderateScale, verticalScale } from '../utils/responsive';
+import { scale, moderateScale } from '../utils/responsive';
 import { TouchableOpacity, ActivityIndicator } from 'react-native';
 import { usePayOrder } from '../hooks/usePayOrder';
 
@@ -70,9 +70,7 @@ export default function OrderDetailScreen({ navigation, route }: Props) {
 
   // Derived (safe defaults when order is null)
   const isUnpaid = order?.status === 0 && !order?.paid;
-  const isInProgress = order?.status === 0 && order?.paid;
   const isFailed = order?.status === 2;
-  const isDone = order?.status === 1 || order?.status === 3;
   const isCollected = order?.status === 3;
   
   const statusLabel = isCollected ? 'Collected' : order?.status === 1 ? 'Completed' : isFailed ? 'Failed' : isUnpaid ? 'Unpaid' : 'In Progress';

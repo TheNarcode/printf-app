@@ -39,8 +39,8 @@ async function doUpload(
         entry.cancelFn = () => {
           try {
             task.cancel();
-          } catch (e) {
-            // ignore cancel errors
+          } catch {
+            // silent ignore cancel errors
           }
         };
       }

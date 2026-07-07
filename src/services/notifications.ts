@@ -85,6 +85,6 @@ export function setupTokenRefreshListener(
 // This runs when the app is in the background or killed.
 // The OS automatically shows the notification from the `notification` payload.
 // We just need to return a promise so Firebase knows we handled it.
-export function backgroundMessageHandler(remoteMessage: any): Promise<void> {
+export function backgroundMessageHandler(_remoteMessage: any): Promise<void> {
   return Promise.resolve();
 }

@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import type {UserProfile, ThemeMode, Order} from '../types';
+import type {ThemeMode, Order} from '../types';
 
 const KEYS = {
   THEME_MODE: 'printf_theme_mode',

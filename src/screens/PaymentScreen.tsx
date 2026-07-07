@@ -29,7 +29,7 @@ interface Props {
 export default function PaymentScreen({ navigation }: Props) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
-  const { getOrderSummary, refreshOrders, resetFlow, files } = usePrintJob();
+  const { getOrderSummary, refreshOrders, resetFlow } = usePrintJob();
   const { getValidToken, user } = useAuth();
   const { assertOnline } = useNetwork();
   const [isPaying, setIsPaying] = useState(false);

@@ -22,8 +22,6 @@ import { useAuth } from '../context/AuthContext';
 import { useNetwork } from '../context/NetworkContext';
 import { CustomAlertAPI } from '../components/CustomAlert';
 import Header from '../components/Header';
-import NetworkBanner from '../components/NetworkBanner';
-import ProfileButton from '../components/ProfileButton';
 import OrderCard from '../components/OrderCard';
 import FAB from '../components/FAB';
 import type { Order } from '../types';
@@ -82,7 +80,7 @@ export default function HomeScreen({ navigation }: Props) {
   );
 
   const handleProfile = useCallback(
-    () => navigation.navigate('Profile'),
+    () => navigation.navigate('Settings'),
     [navigation],
   );
   const handleNewOrder = useCallback(() => {

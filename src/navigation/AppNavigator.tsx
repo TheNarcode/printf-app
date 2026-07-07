@@ -16,12 +16,12 @@ import { NetworkProvider, useNetwork } from '../context/NetworkContext';
 import LoginScreen from '../screens/LoginScreen';
 import HomeScreen from '../screens/HomeScreen';
 import UploadScreen from '../screens/UploadScreen';
-import SettingsScreen from '../screens/SettingsScreen';
+import PrintSettingsScreen from '../screens/PrintSettingsScreen';
 import PaymentScreen from '../screens/PaymentScreen';
 import OrderResultScreen from '../screens/OrderResultScreen';
 import OrderDetailScreen from '../screens/OrderDetailScreen';
 import AllOrdersScreen from '../screens/AllOrdersScreen';
-import ProfileScreen from '../screens/ProfileScreen';
+import SettingsScreen from '../screens/SettingsScreen';
 import PrivacyScreen from '../screens/PrivacyScreen';
 import TermsScreen from '../screens/TermsScreen';
 
@@ -29,12 +29,12 @@ export type RootStackParamList = {
   Login: undefined;
   Home: undefined;
   Upload: undefined;
-  Settings: undefined;
+  PrintSettings: undefined;
   Payment: undefined;
   OrderResult: { orderId?: string; success: boolean };
   OrderDetail: { orderId: string };
   AllOrders: { filter?: string } | undefined;
-  Profile: undefined;
+  Settings: undefined;
   Privacy: undefined;
   Terms: undefined;
 };
@@ -112,7 +112,7 @@ export default function AppNavigator({ navigationRef }: Props) {
               <>
                 <Stack.Screen name="Home" component={HomeScreen} />
                 <Stack.Screen name="Upload" component={UploadScreen} />
-                <Stack.Screen name="Settings" component={SettingsScreen} />
+                <Stack.Screen name="PrintSettings" component={PrintSettingsScreen} />
                 <Stack.Screen name="Payment" component={PaymentScreen} />
                 <Stack.Screen
                   name="OrderResult"
@@ -122,8 +122,8 @@ export default function AppNavigator({ navigationRef }: Props) {
                 <Stack.Screen name="OrderDetail" component={OrderDetailScreen} />
                 <Stack.Screen name="AllOrders" component={AllOrdersScreen} />
                 <Stack.Screen
-                  name="Profile"
-                  component={ProfileScreen}
+                  name="Settings"
+                  component={SettingsScreen}
                   options={{ animation: 'none' }}
                 />
                 <Stack.Screen name="Privacy" component={PrivacyScreen} />
@@ -140,6 +140,7 @@ export default function AppNavigator({ navigationRef }: Props) {
         </View>
       )}
 
+      <NetworkBanner />
 
       </View>
     </NetworkProvider>

@@ -81,7 +81,7 @@ export default function UploadScreen({ navigation }: Props) {
     if (!assertOnline()) return;
     if (files.length > 0) {
       startUploads(files, getValidToken);
-      navigation.navigate('Settings');
+      navigation.navigate('PrintSettings');
     }
   }, [files, navigation, getValidToken, assertOnline]);
 
