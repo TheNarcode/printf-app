@@ -11,6 +11,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import { usePrintJob } from '../context/PrintJobContext';
+import { useNetwork } from '../context/NetworkContext';
 import { CustomAlertAPI } from '../components/CustomAlert';
 import Header from '../components/Header';
 import { formatCurrency, formatFileSize } from '../utils/formatters';
@@ -30,6 +31,7 @@ export default function PaymentScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
   const { getOrderSummary, refreshOrders, resetFlow } = usePrintJob();
   const { getValidToken, user } = useAuth();
+  const { assertOnline } = useNetwork();
   const [isPaying, setIsPaying] = useState(false);
   const [statusText, setStatusText] = useState('');
 
@@ -41,6 +43,7 @@ export default function PaymentScreen({ navigation }: Props) {
   const handleBack = useCallback(() => navigation.goBack(), [navigation]);
 
   const handlePay = useCallback(async () => {
+    if (!assertOnline()) return;
     setIsPaying(true);
     let didNavigate = false;
 

@@ -7,6 +7,7 @@ import React, {
 } from 'react';
 import {
   ActivityIndicator,
+  BackHandler,
   FlatList,
   Image,
   Modal,
@@ -356,6 +357,16 @@ export default function SettingsScreen({ navigation }: Props) {
   const closeSidesModal = useCallback(() => setShowSidesModal(false), []);
   const openFullscreen = useCallback(() => setShowFullscreen(true), []);
   const closeFullscreen = useCallback(() => setShowFullscreen(false), []);
+
+  // Close fullscreen modal when Android back button is pressed
+  useEffect(() => {
+    if (!showFullscreen) return;
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      closeFullscreen();
+      return true; // prevent default back navigation
+    });
+    return () => sub.remove();
+  }, [showFullscreen, closeFullscreen]);
 
   // ── Early return after ALL hooks ──────────────────────────────────────────
   if (!file || !settings) return null;

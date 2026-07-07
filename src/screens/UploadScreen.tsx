@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/ThemeContext';
 import { usePrintJob } from '../context/PrintJobContext';
 import { useAuth } from '../context/AuthContext';
+import { useNetwork } from '../context/NetworkContext';
 import { useFileUpload } from '../hooks/useFileUpload';
 import Header from '../components/Header';
 import FileDropZone from '../components/FileDropZone';
@@ -27,6 +28,7 @@ export default function UploadScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
   const { files, addFiles, removeFile } = usePrintJob();
   const { getValidToken } = useAuth();
+  const { assertOnline } = useNetwork();
   const { pickFiles } = useFileUpload();
 
   const totalSize = files.reduce((sum, f) => sum + f.size, 0);
@@ -37,12 +39,12 @@ export default function UploadScreen({ navigation }: Props) {
   }, [pickFiles, addFiles]);
 
   const handleNext = useCallback(() => {
+    if (!assertOnline()) return;
     if (files.length > 0) {
-      // Start uploading files in the background while the user configures settings
       startUploads(files, getValidToken);
       navigation.navigate('Settings');
     }
-  }, [files, navigation, getValidToken]);
+  }, [files, navigation, getValidToken, assertOnline]);
 
   const handleClose = useCallback(() => navigation.goBack(), [navigation]);
 

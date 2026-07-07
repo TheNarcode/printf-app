@@ -38,7 +38,7 @@ export default function OrderDetailScreen({ navigation, route }: Props) {
   const insets = useSafeAreaInsets();
 
   const screenBg = colors.background;
-  const slipBg = isDark ? '#27272A' : '#e0e0e0';;
+  const slipBg = isDark ? '#27272A' : '#eeeeee';;
 
   const { orders, refreshOrders } = usePrintJob();
 
@@ -69,23 +69,31 @@ export default function OrderDetailScreen({ navigation, route }: Props) {
   const handleBack = useCallback(() => navigation.goBack(), [navigation]);
 
   // Derived (safe defaults when order is null)
+  const isUnpaid = order?.status === 0 && !order?.paid;
+  const isInProgress = order?.status === 0 && order?.paid;
   const isFailed = order?.status === 2;
   const isDone = order?.status === 1 || order?.status === 3;
-  const statusLabel = order?.status === 3 ? 'COLLECTED' : order?.status === 1 ? 'COMPLETED' : order?.status === 2 ? 'FAILED' : 'PENDING';
-  const statusColor = order?.status === 3
+  const isCollected = order?.status === 3;
+  
+  const statusLabel = isCollected ? 'Collected' : order?.status === 1 ? 'Completed' : isFailed ? 'Failed' : isUnpaid ? 'Unpaid' : 'In Progress';
+  const statusColor = isCollected
     ? colors.collected
-    : order?.status === 2
+    : isFailed
     ? colors.danger
     : order?.status === 1
     ? colors.success
-    : colors.warning;
-  const statusBg = order?.status === 3
-    ? colors.collectedBorder
-    : order?.status === 2
-    ? colors.dangerBorder
+    : isUnpaid
+    ? colors.warning
+    : colors.info;
+  const statusBg = isCollected
+    ? colors.collectedBg
+    : isFailed
+    ? colors.dangerBg
     : order?.status === 1
-    ? colors.successBorder
-    : colors.warningBorder;
+    ? colors.successBg
+    : isUnpaid
+    ? colors.warningBg
+    : colors.infoBg;
 
   // ── Early return after all hooks ──────────────────────────────────────────
   if (!order) {

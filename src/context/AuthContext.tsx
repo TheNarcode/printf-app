@@ -20,6 +20,7 @@ interface AuthContextValue {
   idToken: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  isAuthenticating: boolean;
   signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
   getValidToken: () => Promise<string | null>;
@@ -29,7 +30,8 @@ const AuthContext = createContext<AuthContextValue>({
   user: null,
   idToken: null,
   isAuthenticated: false,
-  isLoading: true, // Start true — we're checking storage
+  isLoading: true,
+  isAuthenticating: false,
   signInWithGoogle: async () => {},
   signOut: async () => {},
   getValidToken: async () => null,
@@ -39,6 +41,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [idToken, setIdToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
 
   // Initialize GoogleSignin only once
   useEffect(() => {
@@ -78,7 +81,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Sign in with Google
   const signInWithGoogle = useCallback(async () => {
-    setIsLoading(true);
+    setIsAuthenticating(true);
     try {
       await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
       const response = await GoogleSignin.signIn();
@@ -109,7 +112,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       CustomAlertAPI.alert('Login Failed', message);
       // Don't throw — let the UI stay on login screen
     } finally {
-      setIsLoading(false);
+      setIsAuthenticating(false);
     }
   }, []);
 
@@ -172,11 +175,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       idToken,
       isAuthenticated: user !== null,
       isLoading,
+      isAuthenticating,
       signInWithGoogle,
       signOut,
       getValidToken,
     }),
-    [user, idToken, isLoading, signInWithGoogle, signOut, getValidToken],
+    [user, idToken, isLoading, isAuthenticating, signInWithGoogle, signOut, getValidToken],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

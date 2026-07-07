@@ -29,10 +29,10 @@ export const getStatusStyle = (status: number, colors: any) => {
       };
     case 0:
       return {
-        bg: colors.borderLight,
-        text: colors.textSecondary,
-        border: colors.border,
-        dot: colors.textMuted,
+        bg: colors.infoBg,
+        text: colors.info,
+        border: colors.infoBorder,
+        dot: colors.info,
         label: 'Pending',
       };
     case 1:
@@ -104,7 +104,7 @@ const OrderCard = memo(
                   ]}
                 >
                   <Text style={[styles.badgeText, { color: colors.warning }]}>
-                    PAY NOW
+                    Unpaid
                   </Text>
                 </View>
               ) : (
@@ -117,12 +117,6 @@ const OrderCard = memo(
                     },
                   ]}
                 >
-                  <View
-                    style={[
-                      styles.badgeDot,
-                      { backgroundColor: statusStyle.dot },
-                    ]}
-                  />
                   <Text style={[styles.badgeText, { color: statusStyle.text }]}>
                     {statusStyle.label}
                   </Text>
@@ -154,7 +148,7 @@ const OrderCard = memo(
       ? { bg: colors.successBg, text: colors.success, label: 'Completed' }
       : order.status === 3
       ? { bg: colors.collectedBg, text: colors.collected, label: 'Collected' }
-      : { bg: colors.warningBg, text: colors.warning, label: 'Pending' };
+      : { bg: colors.infoBg, text: colors.info, label: 'Pending' };
 
     return (
       <TouchableOpacity
@@ -195,14 +189,18 @@ const OrderCard = memo(
                   ]}
                 >
                   <Text style={[styles.listBadgeText, { color: colors.warning }]}>
-                    PAY NOW
+                    Unpaid
                   </Text>
                 </View>
               ) : (
                 <View
                   style={[
                     styles.listBadge,
-                    { backgroundColor: listBadgeStyle.bg },
+                    { 
+                      backgroundColor: listBadgeStyle.bg,
+                      borderWidth: 1,
+                      borderColor: listBadgeStyle.text
+                    },
                   ]}
                 >
                   <Text
@@ -265,7 +263,6 @@ const styles = StyleSheet.create({
   badgeText: {
     fontSize: moderateScale(9),
     fontFamily: 'Geist-Medium',
-    textTransform: 'uppercase',
     letterSpacing: 0.2,
   },
   homeBottomRow: {

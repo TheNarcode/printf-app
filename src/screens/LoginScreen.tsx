@@ -1,13 +1,18 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  ActivityIndicator,
   Animated,
   Dimensions,
-  FlatList,
+  Easing,
+  Platform,
   StyleSheet,
   TouchableOpacity,
+  UIManager,
   View,
 } from 'react-native';
+
+if (Platform.OS === 'android') {
+  UIManager.setLayoutAnimationEnabledExperimental?.(true);
+}
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/ThemeContext';
 import { useAuth } from '../context/AuthContext';
@@ -47,32 +52,71 @@ const SLIDES = [
   },
 ];
 
+const PaginationDot = ({ isActive, colors }: { isActive: boolean, colors: any }) => {
+  const anim = useRef(new Animated.Value(isActive ? 1 : 0)).current;
+
+  useEffect(() => {
+    Animated.spring(anim, {
+      toValue: isActive ? 1 : 0,
+      useNativeDriver: false,
+      bounciness: 0,
+      speed: 20,
+    }).start();
+  }, [isActive, anim]);
+
+  const dotScale = anim.interpolate({ inputRange: [0, 1], outputRange: [1, 1.5] });
+  const opacity = anim.interpolate({ inputRange: [0, 1], outputRange: [0.3, 1] });
+  const backgroundColor = anim.interpolate({ inputRange: [0, 1], outputRange: [colors.textMuted as string, colors.primary as string] });
+
+  return (
+    <Animated.View
+      style={[
+        styles.dot,
+        {
+          backgroundColor,
+          opacity,
+          transform: [{ scale: dotScale }],
+        },
+      ]}
+    />
+  );
+};
+
 export default function LoginScreen() {
   const { colors, isDark, setMode } = useTheme();
   const toggleMode = () => setMode(isDark ? 'light' : 'dark');
   const insets = useSafeAreaInsets();
-  const { signInWithGoogle, isLoading } = useAuth();
+  const { signInWithGoogle } = useAuth();
 
+  // Mirror the web: slides array + clone of first slide at end
+  const renderSlides = [...SLIDES, { ...SLIDES[0], id: 'clone', origIndex: 0 }];
   const [slides, setSlides] = useState(() => SLIDES.map((s, i) => ({ ...s, origIndex: i })));
   const [isAnimating, setIsAnimating] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(0);
   const transX = useRef(new Animated.Value(0)).current;
+  // Track the position in the full renderSlides array (0..4)
+  const posRef = useRef(0);
 
   const nextSlide = useCallback(() => {
     if (isAnimating) return;
     setIsAnimating(true);
+    const nextPos = posRef.current + 1;
+    // Advance dot immediately (mirrors web: dot switches on isAnimating=true)
+    setActiveIndex(nextPos % SLIDES.length);
     Animated.timing(transX, {
-      toValue: -width,
+      toValue: -width * nextPos,
       duration: 500,
+      easing: Easing.inOut(Easing.ease),
       useNativeDriver: true,
     }).start(() => {
       setIsAnimating(false);
-      setSlides(prev => {
-        const newArr = [...prev];
-        const first = newArr.shift();
-        if (first) newArr.push(first);
-        return newArr;
-      });
-      transX.setValue(0);
+      if (nextPos === SLIDES.length) {
+        // Snap back to position 0 (the real first slide) instantly — no visible flash
+        transX.setValue(0);
+        posRef.current = 0;
+      } else {
+        posRef.current = nextPos;
+      }
     });
   }, [isAnimating, transX]);
 
@@ -110,32 +154,28 @@ export default function LoginScreen() {
     await signInWithGoogle();
   }, [signInWithGoogle]);
 
-  const renderItem = (item: typeof slides[0]) => {
-
-
-    return (
-      <View key={`${item.origIndex}`} style={[styles.slideContainer, { width }]}>
-        <View style={styles.lottieContainer}>
-          <DotLottie
-            source={{ uri: item.uri }}
-            autoplay
-            loop
-            style={styles.lottie}
-          />
-        </View>
-        <View style={styles.textContainer}>
-          {!!item.title && (
-            <Text style={[styles.title, { color: colors.text }]}>{item.title}</Text>
-          )}
-          {!!item.subtitle && (
-            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-              {item.subtitle}
-            </Text>
-          )}
-        </View>
+  const renderItem = (item: typeof renderSlides[0]) => (
+    <View key={`${item.id}`} style={[styles.slideContainer, { width }]}>
+      <View style={styles.lottieContainer}>
+        <DotLottie
+          source={{ uri: item.uri }}
+          autoplay
+          loop
+          style={styles.lottie}
+        />
       </View>
-    );
-  };
+      <View style={styles.textContainer}>
+        {!!item.title && (
+          <Text style={[styles.title, { color: colors.text }]}>{item.title}</Text>
+        )}
+        {!!item.subtitle && (
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+            {item.subtitle}
+          </Text>
+        )}
+      </View>
+    </View>
+  );
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
@@ -157,39 +197,25 @@ export default function LoginScreen() {
           style={styles.themeToggle}
         >
           {isDark ? (
-            <Moon size={moderateScale(18)} color={colors.textMuted} />
+            <Sun size={moderateScale(18)} color={colors.text} />
           ) : (
-            <Sun size={moderateScale(18)} color={colors.textMuted} />
+            <Moon size={moderateScale(18)} color={colors.text} />
           )}
         </TouchableOpacity>
       </View>
 
       <View style={styles.carouselWrapper}>
         <View style={{ width, overflow: 'hidden' }}>
-          <Animated.View style={{ flexDirection: 'row', width: width * slides.length, transform: [{ translateX: transX }] }}>
-            {slides.map(renderItem)}
+          <Animated.View style={{ flexDirection: 'row', width: width * renderSlides.length, transform: [{ translateX: transX }] }}>
+            {renderSlides.map(renderItem)}
           </Animated.View>
         </View>
 
         {/* Pagination Dots */}
         <View style={styles.pagination}>
-          {SLIDES.map((_, idx) => {
-            const activeId = (isAnimating && slides.length > 1) ? slides[1].origIndex : slides[0].origIndex;
-            const isActive = activeId === idx;
-            return (
-              <View
-                key={idx.toString()}
-                style={[
-                  styles.dot,
-                  {
-                    backgroundColor: isActive ? colors.primary : colors.textMuted,
-                    opacity: isActive ? 1 : 0.3,
-                    transform: [{ scale: isActive ? 1.5 : 1 }],
-                  },
-                ]}
-              />
-            );
-          })}
+          {SLIDES.map((_, idx) => (
+            <PaginationDot key={idx.toString()} isActive={activeIndex === idx} colors={colors} />
+          ))}
         </View>
       </View>
 
@@ -197,22 +223,15 @@ export default function LoginScreen() {
       <View style={[styles.bottomSection, { paddingBottom: insets.bottom + scale(24) }]}>
         <TouchableOpacity
           onPress={handleSignIn}
-          disabled={isLoading}
           activeOpacity={0.7}
           style={[
             styles.googleBtn,
             { backgroundColor: colors.card, borderColor: colors.border },
           ]}>
-          {isLoading ? (
-            <ActivityIndicator size="small" color={colors.text} />
-          ) : (
-            <>
-              <GoogleLogo size={moderateScale(20)} />
-              <Text style={[styles.googleBtnText, { color: colors.text }]}>
-                Continue with Google
-              </Text>
-            </>
-          )}
+          <GoogleLogo size={moderateScale(20)} />
+          <Text style={[styles.googleBtnText, { color: colors.text }]}>
+            Continue with Google
+          </Text>
         </TouchableOpacity>
 
         <View style={styles.footerLinks}>

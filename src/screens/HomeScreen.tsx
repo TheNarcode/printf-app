@@ -9,18 +9,20 @@ import {
 } from 'react-native';
 import {
   ChevronRight,
-  RefreshCcw,
-  CheckCircle2,
-  AlertCircle,
-  BanknoteX,
+  ClipboardClock,
+  PrinterCheck,
+  PrinterX,
+  BanknoteArrowUp,
   Settings,
 } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/ThemeContext';
 import { usePrintJob } from '../context/PrintJobContext';
 import { useAuth } from '../context/AuthContext';
+import { useNetwork } from '../context/NetworkContext';
 import { CustomAlertAPI } from '../components/CustomAlert';
 import Header from '../components/Header';
+import NetworkBanner from '../components/NetworkBanner';
 import ProfileButton from '../components/ProfileButton';
 import OrderCard from '../components/OrderCard';
 import FAB from '../components/FAB';
@@ -44,10 +46,11 @@ export default function HomeScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
   const { orders, refreshOrders, resetFlow } = usePrintJob();
   const { user } = useAuth();
+  const { assertOnline } = useNetwork();
   const [refreshing, setRefreshing] = useState(false);
 
-  // Pull-to-refresh handler
   const handleRefresh = useCallback(async () => {
+    if (!assertOnline()) return;
     setRefreshing(true);
     try {
       await refreshOrders();
@@ -59,7 +62,7 @@ export default function HomeScreen({ navigation }: Props) {
     } finally {
       setRefreshing(false);
     }
-  }, [refreshOrders]);
+  }, [refreshOrders, assertOnline]);
 
   const { width } = useWindowDimensions();
   const maxOrders = width > 768 ? 5 : 3;
@@ -80,9 +83,10 @@ export default function HomeScreen({ navigation }: Props) {
     [navigation],
   );
   const handleNewOrder = useCallback(() => {
+    if (!assertOnline()) return;
     resetFlow();
     navigation.navigate('Upload');
-  }, [navigation, resetFlow]);
+  }, [navigation, resetFlow, assertOnline]);
   const handleOrderPress = useCallback(
     (order: Order & { _payNowTrigger?: boolean }) => navigation.navigate('OrderDetail', { orderId: order.id, _payNowTrigger: order._payNowTrigger }),
     [navigation],
@@ -110,27 +114,31 @@ export default function HomeScreen({ navigation }: Props) {
   const stats = [
     {
       key: 'payment_pending',
-      icon: BanknoteX,
+      icon: BanknoteArrowUp,
       count: counts.paymentPending,
       label: 'Payment Pending',
+      iconColor: colors.warning,
     },
     {
       key: 'in_progress',
-      icon: RefreshCcw,
+      icon: ClipboardClock,
       count: counts.inProgress,
       label: 'In Progress',
+      iconColor: colors.info,
     },
     {
       key: 'completed',
-      icon: CheckCircle2,
+      icon: PrinterCheck,
       count: counts.completed,
       label: 'To Collect',
+      iconColor: colors.success,
     },
     {
       key: 'failed',
-      icon: AlertCircle,
+      icon: PrinterX,
       count: counts.failed,
       label: 'Failed',
+      iconColor: colors.danger,
     },
   ];
 
@@ -144,7 +152,7 @@ export default function HomeScreen({ navigation }: Props) {
             onPress={handleProfile}
             activeOpacity={0.7}
           >
-            <Settings size={moderateScale(20)} color={colors.textMuted} strokeWidth={1.8} />
+            <Settings size={moderateScale(20)} color={colors.text} strokeWidth={1.8} />
           </TouchableOpacity>
         }
       />
@@ -193,7 +201,7 @@ export default function HomeScreen({ navigation }: Props) {
                       <View style={styles.statTop}>
                         <s.icon
                           size={moderateScale(16)}
-                          color={colors.textMuted}
+                          color={s.iconColor}
                           strokeWidth={1.8}
                         />
                         <Text
@@ -260,7 +268,7 @@ export default function HomeScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   listContent: { paddingHorizontal: scale(20) },
-  headerSection: { paddingTop: scale(24) },
+  headerSection: { paddingTop: scale(12) },
   settingsBtn: {
     padding: scale(8),
     borderRadius: 999,
@@ -271,10 +279,10 @@ const styles = StyleSheet.create({
     fontSize: moderateScale(24),
     fontFamily: 'Geist-Bold',
     letterSpacing: -0.5,
-    marginBottom: scale(28),
+    marginBottom: scale(16),
   },
 
-  statsGrid: { gap: scale(12), marginBottom: scale(32) },
+  statsGrid: { gap: scale(12), marginBottom: scale(20) },
   statsRow: { flexDirection: 'row', gap: scale(12) },
   statCard: {
     flex: 1,
@@ -295,8 +303,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: scale(12),
-    marginBottom: scale(16),
+    paddingVertical: scale(8),
+    marginBottom: scale(8),
   },
   sectionTitle: { fontSize: moderateScale(16), fontFamily: 'Geist-SemiBold' },
   viewAllBtn: { flexDirection: 'row', alignItems: 'center', gap: 2 },
