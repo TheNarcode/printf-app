@@ -22,6 +22,7 @@ const NetworkContext = createContext<NetworkContextValue>({
 export function NetworkProvider({ children }: { children: React.ReactNode }) {
   const [status, setStatus] = useState<NetworkStatus>('online');
   const initializedRef = useRef(false);
+  const wasOfflineRef = useRef(false);  // true only after we've confirmed an offline state
   const backOnlineTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -29,16 +30,24 @@ export function NetworkProvider({ children }: { children: React.ReactNode }) {
       const connected = state.isConnected === true;
 
       if (!initializedRef.current) {
+        // First event: just set the real initial state, no banner
         initializedRef.current = true;
+        wasOfflineRef.current = !connected;
         setStatus(connected ? 'online' : 'offline');
         return;
       }
 
       if (connected) {
-        setStatus('back-online');
-        if (backOnlineTimerRef.current) clearTimeout(backOnlineTimerRef.current);
-        backOnlineTimerRef.current = setTimeout(() => setStatus('online'), 2500);
+        if (wasOfflineRef.current) {
+          // Only show 'back-online' if we actually recovered from offline
+          wasOfflineRef.current = false;
+          setStatus('back-online');
+          if (backOnlineTimerRef.current) clearTimeout(backOnlineTimerRef.current);
+          backOnlineTimerRef.current = setTimeout(() => setStatus('online'), 2500);
+        }
+        // If wasOfflineRef was already false (spurious online event), ignore it
       } else {
+        wasOfflineRef.current = true;
         if (backOnlineTimerRef.current) {
           clearTimeout(backOnlineTimerRef.current);
           backOnlineTimerRef.current = null;

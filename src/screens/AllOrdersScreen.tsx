@@ -24,13 +24,13 @@ interface Props {
   route?: { params?: { filter?: string } };
 }
 
-type Filter = 'all' | 'in_progress' | 'payment_pending' | 'cancelled' | 'collected' | 'failed';
+type Filter = 'all' | 'in_progress' | 'payment_pending' | 'completed' | 'collected' | 'failed';
 
 const FILTERS: { key: Filter; label: string }[] = [
   { key: 'all', label: 'All orders' },
   { key: 'in_progress', label: 'In progress' },
   { key: 'payment_pending', label: 'Payment pending' },
-  { key: 'cancelled', label: 'Cancelled' },
+  { key: 'completed', label: 'Completed' },
   { key: 'collected', label: 'Collected' },
   { key: 'failed', label: 'Failed' }
 ];
@@ -63,7 +63,7 @@ export default function AllOrdersScreen({ navigation, route }: Props) {
     const f = route?.params?.filter;
     if (f === 'payment_pending') return ['payment_pending'] as Filter[];
     if (f === 'in_progress') return ['in_progress'] as Filter[];
-    if (f === 'cancelled') return ['cancelled'] as Filter[];
+    if (f === 'completed') return ['completed'] as Filter[];
     if (f === 'failed') return ['failed'] as Filter[];
     if (f === 'collected') return ['collected'] as Filter[];
     return ['all'] as Filter[];
@@ -78,7 +78,7 @@ export default function AllOrdersScreen({ navigation, route }: Props) {
     const f = route?.params?.filter;
     if (f === 'payment_pending') setSelectedFilters(['payment_pending']);
     else if (f === 'in_progress') setSelectedFilters(['in_progress']);
-    else if (f === 'cancelled') setSelectedFilters(['cancelled']);
+    else if (f === 'completed') setSelectedFilters(['completed']);
     else if (f === 'failed') setSelectedFilters(['failed']);
     else if (f === 'collected') setSelectedFilters(['collected']);
     else setSelectedFilters(['all']);
@@ -103,7 +103,7 @@ export default function AllOrdersScreen({ navigation, route }: Props) {
       result = result.filter(o => {
         if (selectedFilters.includes('payment_pending') && !o.paid) return true;
         if (selectedFilters.includes('in_progress') && o.status === 0 && o.paid) return true;
-        if (selectedFilters.includes('cancelled') && o.status === 4) return true;
+        if (selectedFilters.includes('completed') && o.status === 1) return true;
         if (selectedFilters.includes('failed') && o.status === 2) return true;
         if (selectedFilters.includes('collected') && o.status === 3) return true;
         return false;
@@ -112,9 +112,11 @@ export default function AllOrdersScreen({ navigation, route }: Props) {
     
     if (search.trim()) {
       const q = search.toLowerCase();
-      result = result.filter(o =>
-        o.files.some(f => f.file.name.toLowerCase().includes(q)),
-      );
+      result = result.filter(o => {
+        const displayId = (o.orderRef || o.id.slice(0, 5)).toLowerCase();
+        if (displayId.includes(q)) return true;
+        return o.files.some(f => f.file.name.toLowerCase().includes(q));
+      });
     }
     return result;
   }, [orders, selectedFilters, search]);
@@ -161,7 +163,7 @@ export default function AllOrdersScreen({ navigation, route }: Props) {
             />
             <TextInput
               style={[styles.searchInput, { color: colors.text }]}
-              placeholder="Search orders..."
+              placeholder="Search by file name or order ID..."
               placeholderTextColor={colors.textMuted}
               value={search}
               onChangeText={setSearch}

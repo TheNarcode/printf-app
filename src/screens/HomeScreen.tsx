@@ -282,8 +282,8 @@ const styles = StyleSheet.create({
     marginBottom: scale(16),
   },
 
-  statsGrid: { gap: scale(12), marginBottom: scale(20) },
-  statsRow: { flexDirection: 'row', gap: scale(12) },
+  statsGrid: { gap: scale(8), marginBottom: scale(20) },
+  statsRow: { flexDirection: 'row', gap: scale(8) },
   statCard: {
     flex: 1,
     padding: scale(14),

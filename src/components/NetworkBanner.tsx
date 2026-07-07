@@ -12,8 +12,16 @@ export default function NetworkBanner() {
   const heightAnim = useRef(new Animated.Value(0)).current;
   const opacityAnim = useRef(new Animated.Value(0)).current;
 
+  const [displayStatus, setDisplayStatus] = React.useState(status);
+
+  useEffect(() => {
+    if (status !== 'online') {
+      setDisplayStatus(status);
+    }
+  }, [status]);
+
   const visible = status === 'offline' || status === 'back-online';
-  const isBackOnline = status === 'back-online';
+  const isBackOnline = displayStatus === 'back-online';
 
   useEffect(() => {
     Animated.parallel([
@@ -30,9 +38,9 @@ export default function NetworkBanner() {
     ]).start();
   }, [visible, heightAnim, opacityAnim]);
 
-  const bg = isBackOnline ? colors.successBg : '#3f3f46';
-  const borderColor = isBackOnline ? colors.successBorder : '#52525b';
-  const textColor = isBackOnline ? colors.success : '#e4e4e7';
+  const bg = isBackOnline ? '#16a34a' : '#3f3f46';
+  const borderColor = isBackOnline ? '#15803d' : '#52525b';
+  const textColor = isBackOnline ? '#ffffff' : '#e4e4e7';
 
   return (
     <Animated.View

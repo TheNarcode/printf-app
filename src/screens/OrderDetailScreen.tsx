@@ -25,7 +25,7 @@ interface Props {
 function Separator({ color }: { color: string }) {
   return (
     <View style={styles.separatorWrap}>
-      <Text style={[styles.separatorText, { color }]} numberOfLines={1}>
+      <Text style={[styles.separatorText, { color }]} numberOfLines={1} ellipsizeMode="clip">
         {'='.repeat(300)}
       </Text>
     </View>
@@ -127,9 +127,9 @@ export default function OrderDetailScreen({ navigation, route }: Props) {
       >
         {/* ── Receipt card ─────────────────────────────────────────── */}
         <View style={styles.receiptContainer}>
-          {/* Top jagged edge: row bg = screenBg, triangles = slipBg pointing up */}
+          {/* Top jagged edge */}
           <View style={[styles.jaggedEdge, { backgroundColor: screenBg }]}>
-            {Array.from({ length: 80 }).map((_, i) => (
+            {Array.from({ length: 60 }).map((_, i) => (
               <View
                 key={i}
                 style={[styles.triangleUp, { borderBottomColor: slipBg }]}
@@ -145,7 +145,7 @@ export default function OrderDetailScreen({ navigation, route }: Props) {
                 style={[styles.logoBox, { backgroundColor: colors.primaryBg }]}
               >
                 <Printer
-                  size={moderateScale(22)}
+                  size={moderateScale(24)}
                   color={colors.primary}
                   strokeWidth={2}
                 />
@@ -171,10 +171,12 @@ export default function OrderDetailScreen({ navigation, route }: Props) {
             </View>
 
             {/* Prominent Status Banner */}
-            <View style={[styles.statusBanner, { backgroundColor: statusBg, borderColor: statusColor }]}>
-              <Text style={[styles.statusBannerText, { color: statusColor }]}>
-                {statusLabel}
-              </Text>
+            <View style={styles.statusPillWrapper}>
+              <View style={[styles.statusPill, { backgroundColor: statusBg, borderColor: statusColor }]}>
+                <Text style={[styles.statusPillText, { color: statusColor }]}>
+                  {statusLabel}
+                </Text>
+              </View>
             </View>
 
             <Separator color={sepColor} />
@@ -188,14 +190,14 @@ export default function OrderDetailScreen({ navigation, route }: Props) {
                 {order.orderRef}
               </Text>
             </View>
-            <View style={styles.metaRow}>
-              <Text style={[styles.monoLabel, { color: colors.textSecondary }]}>
-                Date:
-              </Text>
-              <Text style={[styles.monoValue, { color: colors.text }]}>
-                {formatDateTime(order.createdAt)}
-              </Text>
-            </View>
+              <View style={styles.metaRow}>
+                <Text style={[styles.monoLabel, { color: colors.textSecondary }]}>Date:</Text>
+                <Text style={[styles.monoValue, { color: colors.text }]}>{formatDateTime(order.createdAt)}</Text>
+              </View>
+              <View style={styles.metaRow}>
+                <Text style={[styles.monoLabel, { color: colors.textSecondary }]}>Printer:</Text>
+                <Text style={[styles.monoValue, { color: colors.text }]} numberOfLines={1}>{order.printerName}</Text>
+              </View>
 
             <Separator color={sepColor} />
 
@@ -307,31 +309,32 @@ export default function OrderDetailScreen({ navigation, route }: Props) {
               <Text
                 style={[styles.totalValue, { color: colors.textSecondary }]}
               >
-                {order.paid ? 'PAID' : 'UNPAID'}
+                {order.paid ? 'Payment Cleared' : 'Payment Pending'}
               </Text>
             </View>
 
             <Separator color={sepColor} />
 
-            {/* Footer */}
+            {/* Footer message */}
             <View style={styles.footerSection}>
               <Text style={[styles.footerBold, { color: colors.text }]}>
                 THANK YOU!
               </Text>
-              <Text style={[styles.footerSub, { color: colors.textSecondary }]}>
+              <Text
+                style={[styles.footerSub, { color: colors.textSecondary }]}
+              >
                 Glad to see you again!
               </Text>
             </View>
           </View>
           {/* ── end receipt body ──────────────────────────────────── */}
 
-          {/* Bottom jagged edge: row bg = slipBg, triangles = screenBg pointing UP.
-              This perfectly seamlessly matches the bottom of receipt body. */}
-          <View style={[styles.jaggedEdge, { backgroundColor: slipBg }]}>
-            {Array.from({ length: 80 }).map((_, i) => (
+          {/* Bottom jagged edge */}
+          <View style={[styles.jaggedEdge, { backgroundColor: screenBg }]}>
+            {Array.from({ length: 60 }).map((_, i) => (
               <View
                 key={i}
-                style={[styles.triangleUp, { borderBottomColor: screenBg }]}
+                style={[styles.triangleDown, { borderTopColor: slipBg }]}
               />
             ))}
           </View>
@@ -340,7 +343,7 @@ export default function OrderDetailScreen({ navigation, route }: Props) {
       </ScrollView>
 
       {(!order.paid && order.paymentRequestId) && (
-        <View style={[styles.bottomSection, { paddingBottom: insets.bottom + scale(24), backgroundColor: screenBg }]}>
+        <View style={[styles.bottomSection, { paddingBottom: insets.bottom + scale(24) }]} pointerEvents="box-none">
           <TouchableOpacity
             onPress={() => payOrder(order)}
             disabled={isPaying}
@@ -380,36 +383,56 @@ const styles = StyleSheet.create({
   emptyState: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   emptyText: { fontSize: moderateScale(14) },
 
-  receiptContainer: {},
+  receiptContainer: {
+    width: scale(320),
+    alignSelf: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
+  },
 
   receiptBody: {
-    paddingHorizontal: scale(16),
-    paddingVertical: scale(12),
+    paddingHorizontal: scale(20),
+    paddingTop: scale(32),
+    paddingBottom: scale(12),
   },
 
   // ── Jagged edges ──────────────────────────────────────────────────────────
-  jaggedEdge: { flexDirection: 'row', height: scale(8), overflow: 'hidden' },
+  jaggedEdge: { flexDirection: 'row', height: scale(12), overflow: 'hidden' },
 
-  // triangleUp: transparent triangle whose FILL colour is the receipt body (slipBg).
-  // The gap between triangles shows through to screenBg — that's intentional.
   triangleUp: {
     width: 0,
     height: 0,
     backgroundColor: 'transparent',
     borderStyle: 'solid',
-    borderLeftWidth: scale(4.5),
-    borderRightWidth: scale(4.5),
-    borderBottomWidth: scale(8),
+    borderLeftWidth: scale(6),
+    borderRightWidth: scale(6),
+    borderBottomWidth: scale(12),
     borderLeftColor: 'transparent',
     borderRightColor: 'transparent',
-    // borderBottomColor set dynamically to slipBg
+    // borderBottomColor set dynamically to screenBg
+  },
+
+  triangleDown: {
+    width: 0,
+    height: 0,
+    backgroundColor: 'transparent',
+    borderStyle: 'solid',
+    borderLeftWidth: scale(6),
+    borderRightWidth: scale(6),
+    borderTopWidth: scale(12),
+    borderLeftColor: 'transparent',
+    borderRightColor: 'transparent',
+    // borderTopColor set dynamically to slipBg
   },
 
   // ── Separator ─────────────────────────────────────────────────────────────
   // overflow:'hidden' clips the 300-char string exactly to the View's width.
   separatorWrap: { overflow: 'hidden', marginVertical: scale(6) },
   separatorText: {
-    fontFamily: 'GeistMono-Bold',
+    fontFamily: 'GeistMono-Regular',
     fontSize: moderateScale(10),
     lineHeight: moderateScale(14),
     letterSpacing: 0,
@@ -418,16 +441,19 @@ const styles = StyleSheet.create({
   thinLine: { height: StyleSheet.hairlineWidth, marginBottom: scale(8) },
 
   // ── Store header ──────────────────────────────────────────────────────────
-  receiptHeader: { alignItems: 'center', marginBottom: scale(4) },
+  receiptHeader: { alignItems: 'center', marginBottom: scale(12) },
   logoBox: {
-    padding: scale(8),
+    width: scale(48),
+    height: scale(48),
     borderRadius: scale(12),
-    marginBottom: scale(6),
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: scale(12),
   },
   storeName: {
     fontFamily: 'GeistMono-Bold',
-    fontSize: moderateScale(20),
-    letterSpacing: 3,
+    fontSize: moderateScale(18),
+    letterSpacing: 1.5,
     marginBottom: scale(2),
   },
   addressText: {
@@ -435,6 +461,23 @@ const styles = StyleSheet.create({
     fontSize: moderateScale(10),
     lineHeight: moderateScale(16),
     textAlign: 'center',
+  },
+
+  statusPillWrapper: {
+    alignItems: 'center',
+    marginBottom: scale(4),
+  },
+  statusPill: {
+    paddingHorizontal: scale(12),
+    paddingVertical: scale(4),
+    borderWidth: 1,
+    borderRadius: scale(12),
+    alignItems: 'center',
+  },
+  statusPillText: {
+    fontFamily: 'GeistMono-Bold',
+    fontSize: moderateScale(11),
+    letterSpacing: 1.5,
   },
 
   // ── Meta ──────────────────────────────────────────────────────────────────
@@ -464,7 +507,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   colPrice: {
-    width: scale(60),
+    width: scale(56),
     fontFamily: 'GeistMono-Regular',
     fontSize: moderateScale(10),
     textAlign: 'right',
@@ -485,12 +528,15 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   itemPriceCol: {
-    width: scale(60),
+    width: scale(56),
     fontFamily: 'GeistMono-Regular',
     fontSize: moderateScale(11),
     textAlign: 'right',
   },
-  detailsBox: { marginTop: scale(1), paddingLeft: scale(4) },
+  detailsBox: {
+    paddingLeft: scale(4),
+    marginTop: scale(2),
+  },
   itemDetail: {
     fontFamily: 'GeistMono-Regular',
     fontSize: moderateScale(9),
@@ -559,8 +605,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: scale(24),
     paddingTop: scale(16),
     alignItems: 'center',
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: '#00000015',
   },
   payBtn: {
     paddingVertical: scale(13),
