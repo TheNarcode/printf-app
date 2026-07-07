@@ -1,8 +1,9 @@
-import React, { memo } from 'react';
-import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import React, { memo, useEffect, useRef } from 'react';
+import { StyleSheet, TouchableOpacity, View, Animated } from 'react-native';
 import { ArrowLeft, X, Printer } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/ThemeContext';
+import { useNetwork } from '../context/NetworkContext';
 
 import { Text } from '../components/Text';
 import { moderateScale, scale } from '../utils/responsive';
@@ -33,13 +34,25 @@ const Header = memo(
   }: HeaderProps) => {
     const { colors } = useTheme();
     const insets = useSafeAreaInsets();
+    const { status } = useNetwork();
+    
+    const bannerVisible = status === 'offline' || status === 'back-online';
+    const topPadding = useRef(new Animated.Value(insets.top + scale(6))).current;
+
+    useEffect(() => {
+      Animated.timing(topPadding, {
+        toValue: bannerVisible ? insets.top + scale(26) : insets.top + scale(6),
+        duration: 250,
+        useNativeDriver: false,
+      }).start();
+    }, [bannerVisible, insets.top]);
 
     return (
-      <View
+      <Animated.View
         style={[
           styles.wrapper,
           {
-            paddingTop: insets.top + scale(6),
+            paddingTop: topPadding,
             backgroundColor: colors.background,
           },
         ]}
@@ -103,7 +116,7 @@ const Header = memo(
           )}
         </View>
         </View>
-      </View>
+      </Animated.View>
     );
   },
 );

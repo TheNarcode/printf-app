@@ -1,14 +1,15 @@
 import React, { useEffect, useRef } from 'react';
 import { Animated, StyleSheet, View } from 'react-native';
-import { Wifi, WifiOff } from 'lucide-react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { useNetwork } from '../context/NetworkContext';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text } from './Text';
 import { moderateScale, scale } from '../utils/responsive';
 
 export default function NetworkBanner() {
   const { colors } = useTheme();
   const { status } = useNetwork();
+  const insets = useSafeAreaInsets();
   const heightAnim = useRef(new Animated.Value(0)).current;
   const opacityAnim = useRef(new Animated.Value(0)).current;
 
@@ -26,7 +27,7 @@ export default function NetworkBanner() {
   useEffect(() => {
     Animated.parallel([
       Animated.timing(heightAnim, {
-        toValue: visible ? scale(34) : 0,
+        toValue: visible ? scale(20) + insets.top : 0,
         duration: 250,
         useNativeDriver: false,
       }),
@@ -50,16 +51,11 @@ export default function NetworkBanner() {
           height: heightAnim,
           opacity: opacityAnim,
           backgroundColor: bg,
-          borderTopColor: borderColor,
+          borderBottomColor: borderColor,
         },
       ]}
     >
-      <View style={styles.inner}>
-        {isBackOnline ? (
-          <Wifi size={moderateScale(13)} color={textColor} strokeWidth={2} />
-        ) : (
-          <WifiOff size={moderateScale(13)} color={textColor} strokeWidth={2} />
-        )}
+      <View style={[styles.inner, { paddingTop: insets.top }]}>
         <Text style={[styles.text, { color: textColor }]}>
           {isBackOnline
             ? 'Back online'
@@ -73,9 +69,9 @@ export default function NetworkBanner() {
 const styles = StyleSheet.create({
   container: {
     overflow: 'hidden',
-    borderTopWidth: 1,
+    borderBottomWidth: 1,
     position: 'absolute',
-    bottom: 0,
+    top: 0,
     left: 0,
     right: 0,
     zIndex: 9999,
@@ -85,11 +81,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: scale(6),
     paddingHorizontal: scale(16),
   },
   text: {
-    fontSize: moderateScale(11),
+    fontSize: moderateScale(10),
     fontFamily: 'Geist-Medium',
   },
 });

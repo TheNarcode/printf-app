@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { View, StyleSheet, InteractionManager } from 'react-native';
 import {
   NavigationContainer,
@@ -12,7 +12,7 @@ import { useTheme } from '../theme/ThemeContext';
 import { Text } from '../components/Text';
 import { CustomSpinner } from '../components/CustomSpinner';
 import NetworkBanner from '../components/NetworkBanner';
-import { NetworkProvider } from '../context/NetworkContext';
+import { NetworkProvider, useNetwork } from '../context/NetworkContext';
 import LoginScreen from '../screens/LoginScreen';
 import HomeScreen from '../screens/HomeScreen';
 import UploadScreen from '../screens/UploadScreen';
@@ -51,7 +51,6 @@ export default function AppNavigator({ navigationRef }: Props) {
   const [isNavigating, setIsNavigating] = useState(false);
 
 
-
   const navTheme = {
     ...(isDark ? DarkTheme : DefaultTheme),
     colors: {
@@ -79,7 +78,7 @@ export default function AppNavigator({ navigationRef }: Props) {
 
   return (
     <NetworkProvider>
-      <View style={{ flex: 1 }}>
+      <View style={{ flex: 1, backgroundColor: colors.background }}>
         <NavigationContainer 
           ref={navigationRef} 
           theme={navTheme}
@@ -134,14 +133,14 @@ export default function AppNavigator({ navigationRef }: Props) {
           </Stack.Navigator>
         </NavigationContainer>
 
-        {isNavigating && (
-          <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center', zIndex: 9999 }]}>
-            <CustomSpinner size={32} />
-            <Text style={{ marginTop: 16, fontSize: 14, fontFamily: 'Geist-Medium', color: colors.textSecondary }}>Loading...</Text>
-          </View>
-        )}
+      {isNavigating && (
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center', zIndex: 9999 }]}>
+          <CustomSpinner size={32} />
+          <Text style={{ marginTop: 16, fontSize: 14, fontFamily: 'Geist-Medium', color: colors.textSecondary }}>Loading...</Text>
+        </View>
+      )}
 
-        <NetworkBanner />
+
       </View>
     </NetworkProvider>
   );
