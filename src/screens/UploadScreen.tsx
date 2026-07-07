@@ -14,6 +14,7 @@ import { startUploads } from '../services/fileUploadManager';
 import type { UploadedFile } from '../types';
 import { Text } from '../components/Text';
 import { scale, moderateScale } from '../utils/responsive';
+import { CustomAlertAPI } from '../components/CustomAlert';
 
 interface Props {
   navigation: any;
@@ -35,8 +36,34 @@ export default function UploadScreen({ navigation }: Props) {
 
   const handleBrowse = useCallback(async () => {
     const picked = await pickFiles();
-    if (picked.length > 0) addFiles(picked);
-  }, [pickFiles, addFiles]);
+    if (picked.length > 0) {
+      const unique: UploadedFile[] = [];
+      const skippedNames: string[] = [];
+
+      for (const p of picked) {
+        if (p.size > 50 * 1024 * 1024) {
+          skippedNames.push(`${p.name} (Too large)`);
+          continue;
+        }
+
+        const isDuplicate = files.some(f => f.name === p.name && f.size === p.size) ||
+                            unique.some(f => f.name === p.name && f.size === p.size);
+        if (isDuplicate) {
+          skippedNames.push(p.name);
+        } else {
+          unique.push(p);
+        }
+      }
+
+      if (unique.length > 0) addFiles(unique);
+      if (skippedNames.length > 0) {
+        CustomAlertAPI.alert(
+          'Some Files Skipped',
+          `The following files were skipped (duplicates or >50MB):\n${skippedNames.join(', ')}`
+        );
+      }
+    }
+  }, [pickFiles, addFiles, files]);
 
   const handleNext = useCallback(() => {
     if (!assertOnline()) return;

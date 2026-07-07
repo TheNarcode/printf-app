@@ -120,9 +120,10 @@ export async function uploadFile(
   fileName: string,
   fileType: string,
   idToken?: string | null,
+  onTask?: (task: any) => void,
 ): Promise<{ fileId: string }> {
   try {
-    const response = await ReactNativeBlobUtil.fetch(
+    const task = ReactNativeBlobUtil.fetch(
       'POST',
       `${API_BASE_URL}/file/create`,
       {
@@ -138,6 +139,9 @@ export async function uploadFile(
         },
       ],
     );
+
+    if (onTask) onTask(task);
+    const response = await task;
 
     const status = response.info().status;
     if (status !== 200) {

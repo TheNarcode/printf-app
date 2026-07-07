@@ -11,6 +11,7 @@ interface UploadEntry {
   uri: string;
   name: string;
   type: string;
+  cancelFn?: () => void;
 }
 
 const MAX_RETRIES = 3;
@@ -29,11 +30,26 @@ async function doUpload(
   try {
     const token = await getToken();
     if (!token) throw new Error('No auth token');
-    const { fileId } = await uploadFile(entry.uri, entry.name, entry.type, token);
+    const { fileId } = await uploadFile(
+      entry.uri,
+      entry.name,
+      entry.type,
+      token,
+      (task) => {
+        entry.cancelFn = () => {
+          try {
+            task.cancel();
+          } catch (e) {
+            // ignore cancel errors
+          }
+        };
+      }
+    );
     entry.fileId = fileId;
     entry.status = 'done';
     entry.error = null;
-  } catch (err) {
+  } catch (err: any) {
+    if (err.message === 'cancelled') return; // Cancelled by user
     const msg = err instanceof Error ? err.message : String(err);
     entry.attempts = attempt + 1;
     if (attempt < MAX_RETRIES - 1) {
@@ -113,7 +129,11 @@ export function getFileId(localFileId: string): string {
 
 /**
  * Clear all upload state (call when flow is reset).
+ * This also cancels any ongoing network requests.
  */
 export function resetUploads(): void {
+  for (const entry of uploads.values()) {
+    if (entry.cancelFn) entry.cancelFn();
+  }
   uploads.clear();
 }

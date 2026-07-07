@@ -1,6 +1,6 @@
 import React, {memo, useCallback} from 'react';
 import {StyleSheet, TouchableOpacity, View} from 'react-native';
-import {FileText, Image as ImageIcon, X} from 'lucide-react-native';
+import {FileText, Image as ImageIcon, Trash} from 'lucide-react-native';
 import {useTheme} from '../theme/ThemeContext';
 import type {UploadedFile} from '../types';
 import {formatFileSize, getFileExtLabel, getFileTypeColor} from '../utils/formatters';
@@ -36,7 +36,7 @@ const FileCard = memo(({file, onRemove}: FileCardProps) => {
 
       {onRemove && (
         <TouchableOpacity onPress={handleRemove} hitSlop={{top: 12, right: 12, bottom: 12, left: 12}} style={styles.removeBtn}>
-          <X size={moderateScale(14)} color={colors.textMuted} strokeWidth={2} />
+          <Trash size={moderateScale(14)} color={colors.textMuted} strokeWidth={2} />
         </TouchableOpacity>
       )}
     </View>
