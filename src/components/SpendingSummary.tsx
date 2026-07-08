@@ -1,6 +1,6 @@
 import React, {memo, useState} from 'react';
 import {StyleSheet, TouchableOpacity, View} from 'react-native';
-import {FileText, Layers, Palette, Circle} from 'lucide-react-native';
+import {Printer, Layers, Palette, Circle} from 'lucide-react-native';
 import {useTheme} from '../theme/ThemeContext';
 import type {Order} from '../types';
 import {calculateSpending, formatCurrency} from '../utils/formatters';
@@ -54,7 +54,7 @@ const SpendingSummary = memo(({orders}: SpendingSummaryProps) => {
       <View style={styles.grid}>
         <View style={[styles.gridItem, {backgroundColor: colors.surface, borderColor: colors.border}]}>
           <View style={styles.gridHeader}>
-            <FileText size={moderateScale(12)} color={colors.textMuted} strokeWidth={2} />
+            <Printer size={moderateScale(12)} color={colors.textMuted} strokeWidth={2} />
             <Text style={[styles.gridLabel, {color: colors.textMuted}]}>ORDERS</Text>
           </View>
           <Text style={[styles.gridValue, {color: colors.text}]}>{summary.orderCount}</Text>

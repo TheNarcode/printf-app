@@ -15,7 +15,7 @@ export default function PrivacyScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
 
   const section = (num: string, title: string, children: React.ReactNode) => (
-    <View style={[styles.section, { borderTopColor: colors.border }]}>
+    <View style={[styles.section, { borderTopColor: colors.border }, num === '01' && { borderTopWidth: 0, paddingTop: 0 }]}>
       <View style={styles.sectionHeader}>
         <Text style={[styles.sectionNum, { color: colors.textMuted }]}>{num}</Text>
         <Text style={[styles.sectionTitle, { color: colors.text }]}>{title}</Text>

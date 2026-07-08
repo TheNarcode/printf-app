@@ -106,7 +106,7 @@ export function calculateSpending(
     start = new Date(now.getFullYear(), now.getMonth(), 1);
   }
   const filtered = orders.filter(
-    o => new Date(o.createdAt) >= start && o.status !== 2,
+    o => new Date(o.createdAt) >= start && o.paid,
   );
   
   let bwPages = 0;
