@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react';
-import { FlatList, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { FlatList, StyleSheet, TouchableOpacity, View, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/ThemeContext';
 import { usePrintJob } from '../context/PrintJobContext';
@@ -30,7 +30,7 @@ export default function UploadScreen({ navigation }: Props) {
   const { files, addFiles, removeFile } = usePrintJob();
   const { getValidToken } = useAuth();
   const { assertOnline } = useNetwork();
-  const { pickFiles } = useFileUpload();
+  const { pickFiles, isReading } = useFileUpload();
 
   const totalSize = files.reduce((sum, f) => sum + f.size, 0);
 
@@ -108,6 +108,12 @@ export default function UploadScreen({ navigation }: Props) {
       {!hasFiles ? (
         <View style={styles.centeredContent}>
           <FileDropZone onBrowse={handleBrowse} />
+          {isReading && (
+            <View style={[styles.readingIndicator, { backgroundColor: colors.surface }]}>
+              <ActivityIndicator size="small" color={colors.text} style={{ marginRight: scale(10) }} />
+              <Text style={{ color: colors.text, fontSize: moderateScale(13), fontFamily: 'Geist-Medium' }}>Reading files...</Text>
+            </View>
+          )}
         </View>
       ) : (
         <FlatList
@@ -117,7 +123,17 @@ export default function UploadScreen({ navigation }: Props) {
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
           ItemSeparatorComponent={FileSeparator}
-          ListHeaderComponent={<FileDropZone onBrowse={handleBrowse} />}
+          ListHeaderComponent={
+            <View>
+              <FileDropZone onBrowse={handleBrowse} />
+              {isReading && (
+                <View style={[styles.readingIndicator, { backgroundColor: colors.surface, marginTop: scale(12) }]}>
+                  <ActivityIndicator size="small" color={colors.text} style={{ marginRight: scale(10) }} />
+                  <Text style={{ color: colors.text, fontSize: moderateScale(13), fontFamily: 'Geist-Medium' }}>Reading files...</Text>
+                </View>
+              )}
+            </View>
+          }
           ListHeaderComponentStyle={{ marginBottom: scale(20) }}
         />
       )}
@@ -159,7 +175,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: scale(20),
   },
-  listContent: { paddingHorizontal: scale(20), paddingBottom: scale(32) },
+  listContent: { paddingHorizontal: scale(20), paddingTop: scale(24), paddingBottom: scale(32) },
   bottomBar: {
     paddingHorizontal: scale(20),
     paddingTop: scale(24),
@@ -178,5 +194,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     width: '100%',
   },
-  nextBtnText: { fontSize: moderateScale(15), fontFamily: 'Geist-SemiBold' },
+  nextBtnText: {
+    fontSize: moderateScale(15),
+    fontFamily: 'Geist-SemiBold',
+  },
+  readingIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: scale(16),
+    paddingVertical: scale(10),
+    paddingHorizontal: scale(16),
+    borderRadius: scale(8),
+    alignSelf: 'center',
+  },
 });

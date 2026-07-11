@@ -1,4 +1,4 @@
-import {useCallback} from 'react';
+import {useCallback, useState} from 'react';
 import {Platform} from 'react-native';
 import type {UploadedFile} from '../types';
 import {generateId} from '../utils/formatters';
@@ -10,6 +10,8 @@ interface DocumentPickerResponse {
   name: string | null;
   size: number | null;
   type: string | null;
+  copyError?: string;
+  fileCopyUri?: string | null;
 }
 
 /**
@@ -43,6 +45,8 @@ async function getActualPageCount(uri: string, fileType: string): Promise<number
  * Hook for handling document picking using react-native-document-picker.
  */
 export function useFileUpload() {
+  const [isReading, setIsReading] = useState(false);
+
   const pickFiles = useCallback(async (): Promise<UploadedFile[]> => {
     try {
       const {pick, types} = require('@react-native-documents/picker');
@@ -55,33 +59,36 @@ export function useFileUpload() {
         copyTo: Platform.OS === 'android' ? 'cachesDirectory' : undefined,
       });
 
+      setIsReading(true);
       // Parse each file to get accurate page count
       const files: UploadedFile[] = [];
       for (const doc of results) {
-        const pages = await getActualPageCount(
-          doc.uri,
-          doc.type || '',
-        );
+        if (!doc.uri) continue;
+
+        const type = doc.type || 'application/octet-stream';
+        const fileUri = doc.copyError ? doc.uri : (doc.fileCopyUri || doc.uri);
+        const pages = await getActualPageCount(fileUri, type);
+
         files.push({
           id: generateId(),
-          name: doc.name || 'Untitled',
-          uri: doc.uri,
+          name: doc.name || 'Unknown File',
+          uri: fileUri,
           size: doc.size || 0,
-          type: doc.type || 'application/octet-stream',
-          pages,
+          type: type,
+          pages: pages,
         });
       }
-
+      setIsReading(false);
       return files;
-    } catch (err: any) {
-      // User cancelled
-      if (err?.code === 'DOCUMENT_PICKER_CANCELED') {
+    } catch (err) {
+      setIsReading(false);
+      if (err instanceof Error && err.message.includes('Canceled')) {
         return [];
       }
-      console.error('File picker error:', err);
+      console.error('File pick error:', err);
       return [];
     }
   }, []);
 
-  return {pickFiles};
+  return { pickFiles, isReading };
 }

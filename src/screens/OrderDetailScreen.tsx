@@ -11,7 +11,7 @@ import { parsePageRange } from '../utils/previewUtils';
 import type { Order } from '../types';
 import { Text } from '../components/Text';
 import { scale, moderateScale } from '../utils/responsive';
-import { TouchableOpacity, ActivityIndicator } from 'react-native';
+import { TouchableOpacity, ActivityIndicator, RefreshControl } from 'react-native';
 import { usePayOrder } from '../hooks/usePayOrder';
 
 interface Props {
@@ -41,6 +41,13 @@ export default function OrderDetailScreen({ navigation, route }: Props) {
   const slipBg = isDark ? '#27272A' : '#eeeeee';;
 
   const { orders, refreshOrders } = usePrintJob();
+  const [refreshing, setRefreshing] = React.useState(false);
+
+  const onRefresh = React.useCallback(async () => {
+    setRefreshing(true);
+    await refreshOrders().catch(() => {});
+    setRefreshing(false);
+  }, [refreshOrders]);
 
   const lastRefreshRef = useRef<number>(0);
   useFocusEffect(
@@ -122,6 +129,15 @@ export default function OrderDetailScreen({ navigation, route }: Props) {
           styles.content,
           { paddingBottom: insets.bottom + scale(100), flexGrow: 1, justifyContent: 'center' },
         ]}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={colors.textMuted}
+            colors={[colors.primary]}
+            progressBackgroundColor={colors.card}
+          />
+        }
       >
         {/* ── Receipt card ─────────────────────────────────────────── */}
         <View style={styles.receiptContainer}>
