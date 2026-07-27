@@ -1,18 +1,23 @@
 import React, {createContext, useCallback, useContext, useEffect, useMemo, useState} from 'react';
 import {useColorScheme} from 'react-native';
 import {darkColors, lightColors, type ThemeColors} from './colors';
+import {createCommonStyles, type CommonStyles} from './commonStyles';
 import type {ThemeMode} from '../types';
 import {getStoredThemeMode, setStoredThemeMode} from '../services/storage';
 
 interface ThemeContextValue {
   colors: ThemeColors;
+  commonStyles: CommonStyles;
   mode: ThemeMode;
   isDark: boolean;
   setMode: (mode: ThemeMode) => void;
 }
 
+const defaultCommonStyles = createCommonStyles(darkColors);
+
 const ThemeContext = createContext<ThemeContextValue>({
   colors: darkColors,
+  commonStyles: defaultCommonStyles,
   mode: 'system',
   isDark: true,
   setMode: () => {},
@@ -36,6 +41,7 @@ export function ThemeProvider({children}: {children: React.ReactNode}) {
   }, [mode, systemScheme]);
 
   const colors = useMemo(() => (isDark ? darkColors : lightColors), [isDark]);
+  const commonStyles = useMemo(() => createCommonStyles(colors), [colors]);
 
   const setMode = useCallback((newMode: ThemeMode) => {
     setModeState(newMode);
@@ -43,8 +49,8 @@ export function ThemeProvider({children}: {children: React.ReactNode}) {
   }, []);
 
   const value = useMemo(
-    () => ({colors, mode, isDark, setMode}),
-    [colors, mode, isDark, setMode],
+    () => ({colors, commonStyles, mode, isDark, setMode}),
+    [colors, commonStyles, mode, isDark, setMode],
   );
 
   return (
@@ -55,3 +61,4 @@ export function ThemeProvider({children}: {children: React.ReactNode}) {
 export function useTheme(): ThemeContextValue {
   return useContext(ThemeContext);
 }
+

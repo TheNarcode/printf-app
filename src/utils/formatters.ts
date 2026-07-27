@@ -141,8 +141,8 @@ export function getStatusColor(status: string, colors: any) {
   switch (status) {
     case 'completed': return {bg: colors.successBg, text: colors.success, border: colors.successBorder};
     case 'printing': case 'processing': return {bg: colors.primaryBg, text: colors.primary, border: colors.primaryBorder};
-    case 'pending': return {bg: 'rgba(245,158,11,0.1)', text: '#F59E0B', border: 'rgba(245,158,11,0.3)'};
-    case 'failed': return {bg: colors.dangerBg, text: colors.danger, border: colors.danger + '30'};
+    case 'pending': return {bg: colors.warningBg, text: colors.warning, border: colors.warningBorder};
+    case 'failed': return {bg: colors.dangerBg, text: colors.danger, border: colors.dangerBorder || (colors.danger + '30')};
     default: return {bg: colors.surface, text: colors.textMuted, border: colors.border};
   }
 }

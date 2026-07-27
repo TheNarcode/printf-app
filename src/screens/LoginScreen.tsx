@@ -11,6 +11,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import { Text } from '../components/Text';
+import { Button } from '../components/Button';
 import GoogleLogo from '../components/GoogleLogo';
 import { Printer, Moon, Sun } from 'lucide-react-native';
 import { scale, moderateScale, verticalScale } from '../utils/responsive';
@@ -76,7 +77,7 @@ const PaginationDot = ({ isActive, colors }: { isActive: boolean; colors: any })
 };
 
 export default function LoginScreen({ navigation }: { navigation: any }) {
-  const { colors, isDark, setMode } = useTheme();
+  const { colors, commonStyles, isDark, setMode } = useTheme();
   const { signInWithGoogle } = useAuth();
   const insets = useSafeAreaInsets();
 
@@ -84,7 +85,6 @@ export default function LoginScreen({ navigation }: { navigation: any }) {
 
   const [activeIndex, setActiveIndex] = useState(0);
   const transX = useRef(new Animated.Value(0)).current;
-  // Use a ref for animation guard to avoid making nextSlide depend on state
   const isAnimatingRef = useRef(false);
   const posRef = useRef(0);
 
@@ -92,31 +92,33 @@ export default function LoginScreen({ navigation }: { navigation: any }) {
     setMode(isDark ? 'light' : 'dark');
   }, [isDark, setMode]);
 
-  const nextSlide = useCallback(() => {
-    if (isAnimatingRef.current) return;
-    isAnimatingRef.current = true;
-    const nextPos = posRef.current + 1;
-    setActiveIndex(nextPos % SLIDES.length);
-    Animated.timing(transX, {
-      toValue: -width * nextPos,
-      duration: 500,
-      easing: Easing.inOut(Easing.ease),
-      useNativeDriver: true,
-    }).start(() => {
-      isAnimatingRef.current = false;
-      if (nextPos === SLIDES.length) {
-        transX.setValue(0);
-        posRef.current = 0;
-      } else {
-        posRef.current = nextPos;
-      }
-    });
-  }, [transX]); // stable: no state deps
-
+  // Auto-scroll loop
   useEffect(() => {
-    const timer = setInterval(nextSlide, 5000);
+    let timer: ReturnType<typeof setInterval>;
+    let curr = 0;
+
+    const tick = () => {
+      curr++;
+      Animated.timing(transX, {
+        toValue: -curr * width,
+        duration: 500,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }).start(() => {
+        if (curr >= SLIDES.length) {
+          // Snap back to zero seamlessly
+          curr = 0;
+          transX.setValue(0);
+          setActiveIndex(0);
+        } else {
+          setActiveIndex(curr);
+        }
+      });
+    };
+
+    timer = setInterval(tick, 3500);
     return () => clearInterval(timer);
-  }, [nextSlide]);
+  }, [transX]);
 
   const orb1Anim = useRef(new Animated.ValueXY({ x: 0, y: 0 })).current;
   const orb2Anim = useRef(new Animated.ValueXY({ x: 0, y: 0 })).current;
@@ -135,7 +137,7 @@ export default function LoginScreen({ navigation }: { navigation: any }) {
   }, [orb1Anim, orb2Anim]);
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
+    <View style={[commonStyles.screenContainer, { paddingTop: insets.top }]}>
       {/* Background orbs */}
       <View style={StyleSheet.absoluteFill}>
         <Animated.View style={[styles.orb1, { backgroundColor: colors.textSecondary, transform: orb1Anim.getTranslateTransform() }]} />
@@ -159,22 +161,22 @@ export default function LoginScreen({ navigation }: { navigation: any }) {
       <View style={styles.carouselWrapper}>
         <View style={{ width, overflow: 'hidden' }}>
           <Animated.View style={{ flexDirection: 'row', width: width * RENDER_SLIDES.length, transform: [{ translateX: transX }] }}>
-            {RENDER_SLIDES.map((item, index) => {
-              const isActive = activeIndex === index;
-              return (
-                <View key={`${item.id}-${index}`} style={[styles.slideContainer, { width }]}>
-                  <View style={styles.lottieContainer}>
-                    <SlideLottie uri={item.uri} isActive={isActive} />
-                  </View>
-                  <View style={styles.textContainer}>
-                    {!!item.title && <Text style={[styles.title, { color: colors.text }]}>{item.title}</Text>}
-                    {!!item.subtitle && (
-                      <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{item.subtitle}</Text>
-                    )}
-                  </View>
+            {RENDER_SLIDES.map((slide, idx) => (
+              <View key={`${slide.id}-${idx}`} style={[styles.slideContainer, { width }]}>
+                <View style={styles.lottieContainer}>
+                  <DotLottie
+                    source={{ uri: slide.uri }}
+                    autoplay
+                    loop
+                    style={styles.lottie}
+                  />
                 </View>
-              );
-            })}
+                <View style={styles.textContainer}>
+                  <Text style={[styles.title, { color: colors.text }]}>{slide.title}</Text>
+                  <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{slide.subtitle}</Text>
+                </View>
+              </View>
+            ))}
           </Animated.View>
         </View>
 

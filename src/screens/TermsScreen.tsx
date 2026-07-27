@@ -11,7 +11,7 @@ interface Props {
 }
 
 export default function TermsScreen({ navigation }: Props) {
-  const { colors } = useTheme();
+  const { colors, commonStyles } = useTheme();
   const insets = useSafeAreaInsets();
 
   const section = (num: string, title: string, children: React.ReactNode) => (
@@ -38,7 +38,7 @@ export default function TermsScreen({ navigation }: Props) {
   );
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={commonStyles.screenContainer}>
       <Header title="Terms of Usage" showBack onBack={() => navigation.goBack()} />
       <ScrollView
         showsVerticalScrollIndicator={false}

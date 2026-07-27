@@ -32,7 +32,6 @@ function mapOrientation(orientation: 'portrait' | 'landscape'): string {
 }
 
 function mapPageRange(pageRange: string): string {
-  // 'all' means no range restriction → empty string for IPP
   return pageRange === 'all' ? '' : pageRange;
 }
 

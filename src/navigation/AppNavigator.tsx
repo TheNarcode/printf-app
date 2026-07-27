@@ -9,10 +9,9 @@ import {
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../theme/ThemeContext';
-import { Text } from '../components/Text';
 import { CustomSpinner } from '../components/CustomSpinner';
 import NetworkBanner from '../components/NetworkBanner';
-import { NetworkProvider, useNetwork } from '../context/NetworkContext';
+import { NetworkProvider } from '../context/NetworkContext';
 import LoginScreen from '../screens/LoginScreen';
 import HomeScreen from '../screens/HomeScreen';
 import UploadScreen from '../screens/UploadScreen';
@@ -68,10 +67,7 @@ export default function AppNavigator({ navigationRef }: Props) {
     // Return a spinner view while checking auth to prevent blank screen flash
     return (
       <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center', zIndex: 9999 }]}>
-        <CustomSpinner size={32} />
-        <Text style={{ marginTop: 16, fontSize: 14, fontFamily: 'Geist-Medium', color: colors.textSecondary }}>
-          {isAuthenticating ? 'Authenticating...' : 'Loading...'}
-        </Text>
+        <CustomSpinner size={32} label={isAuthenticating ? 'Authenticating...' : 'Loading...'} />
       </View>
     );
   }
@@ -86,7 +82,7 @@ export default function AppNavigator({ navigationRef }: Props) {
             setIsNavigating(true);
             const start = Date.now();
             InteractionManager.runAfterInteractions(() => {
-              const timeToWait = Math.max(0, 200 - (Date.now() - start));
+              const timeToWait = Math.max(0, 250 - (Date.now() - start));
               setTimeout(() => setIsNavigating(false), timeToWait);
             });
           }}
@@ -135,8 +131,7 @@ export default function AppNavigator({ navigationRef }: Props) {
 
       {isNavigating && (
         <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center', zIndex: 9999 }]}>
-          <CustomSpinner size={32} />
-          <Text style={{ marginTop: 16, fontSize: 14, fontFamily: 'Geist-Medium', color: colors.textSecondary }}>Loading...</Text>
+          <CustomSpinner size={32} label="Loading..." />
         </View>
       )}
 
