@@ -63,7 +63,6 @@ export const createCommonStyles = (colors: ThemeColors) =>
     primaryBtnText: {
       color: colors.background,
       fontSize: moderateScale(16),
-      fontFamily: 'Geist-Bold',
     },
     secondaryBtn: {
       height: scale(44),
@@ -93,14 +92,12 @@ export const createCommonStyles = (colors: ThemeColors) =>
     },
     badgeText: {
       fontSize: rf.xs,
-      fontFamily: 'Geist-Medium',
       color: colors.textSecondary,
     },
 
     // ─── Typography & Section Headers ─────────────────────
     sectionLabel: {
       fontSize: rf.xs,
-      fontFamily: 'Geist-Medium',
       color: colors.textMuted,
       textTransform: 'uppercase',
       letterSpacing: 0.5,
@@ -108,17 +105,14 @@ export const createCommonStyles = (colors: ThemeColors) =>
     },
     screenTitle: {
       fontSize: rf.xl,
-      fontFamily: 'Geist-Bold',
       color: colors.text,
     },
     bodyText: {
       fontSize: rf.md,
-      fontFamily: 'Geist-Regular',
       color: colors.text,
     },
     subtext: {
       fontSize: rf.sm,
-      fontFamily: 'Geist-Regular',
       color: colors.textSecondary,
     },
   });

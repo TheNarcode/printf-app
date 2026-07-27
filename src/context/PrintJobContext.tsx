@@ -6,6 +6,7 @@ import React, {
   useMemo,
   useReducer,
 } from 'react';
+import { AppState } from 'react-native';
 import type {
   FileWithSettings,
   Order,
@@ -66,7 +67,6 @@ function reducer(state: State, action: Action): State {
       };
     }
     case 'REMOVE_FILE': {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { [action.payload]: _removed, ...rest } = state.fileSettings;
       return {
         ...state,
@@ -135,7 +135,6 @@ export function PrintJobProvider({ children }: { children: React.ReactNode }) {
     orders: [],
   });
 
-  // Load orders: try API first, fall back to local storage
   const loadOrders = useCallback(
     async (throwOnError = false) => {
       if (isAuthenticated) {
@@ -145,18 +144,13 @@ export function PrintJobProvider({ children }: { children: React.ReactNode }) {
             const apiOrders = await fetchOrders(token);
             const appOrders = apiOrders.map(apiOrderToAppOrder);
             dispatch({ type: 'SET_ORDERS', payload: appOrders });
-            setStoredOrders(appOrders); // cache locally
+            setStoredOrders(appOrders); 
             return;
           }
         } catch (err) {
-          console.warn(
-            'Failed to fetch orders from API, falling back to local:',
-            err,
-          );
           if (throwOnError) throw err;
         }
       }
-      // Fallback: local storage
       const stored = await getStoredOrders();
       dispatch({ type: 'SET_ORDERS', payload: stored });
     },
@@ -164,8 +158,28 @@ export function PrintJobProvider({ children }: { children: React.ReactNode }) {
   );
 
   useEffect(() => {
-    loadOrders(false); // silent on mount
+    loadOrders(false); 
   }, [loadOrders]);
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', nextAppState => {
+      if (nextAppState === 'active') {
+        loadOrders(false);
+      }
+    });
+    return () => subscription.remove();
+  }, [loadOrders]);
+
+  useEffect(() => {
+    const hasActivePrintingOrder = state.orders.some(o => o.status === 1);
+    if (!hasActivePrintingOrder) return;
+
+    const interval = setInterval(() => {
+      loadOrders(false);
+    }, 8000);
+
+    return () => clearInterval(interval);
+  }, [state.orders, loadOrders]);
 
   const addFiles = useCallback(
     (files: UploadedFile[]) => dispatch({ type: 'ADD_FILES', payload: files }),
@@ -245,7 +259,7 @@ export function PrintJobProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const refreshOrders = useCallback(async () => {
-    await loadOrders(true); // throw on error so callers can show alerts
+    await loadOrders(true); 
   }, [loadOrders]);
 
   const value = useMemo(

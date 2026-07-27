@@ -79,7 +79,7 @@ export const Button: React.FC<ButtonProps> = ({
           },
           text: {
             color: colors.background,
-          },
+          }
         };
     }
   };
@@ -98,9 +98,7 @@ export const Button: React.FC<ButtonProps> = ({
         commonStyles.primaryBtn,
         vStyles.button,
         (disabled || isLoading) && { opacity: 0.7 },
-        style,
-      ]}
-    >
+        style]}>
       {isLoading ? (
         <View style={styles.contentRow}>
           <CustomSpinner size="small" color={spinnerColor} style={{ marginRight: scale(8) }} />
@@ -110,9 +108,7 @@ export const Button: React.FC<ButtonProps> = ({
               style={[
                 commonStyles.primaryBtnText,
                 vStyles.text,
-                textStyle,
-              ]}
-            >
+                textStyle]}>
               {label}
             </Text>
           ) : null}
@@ -130,9 +126,7 @@ export const Button: React.FC<ButtonProps> = ({
               style={[
                 commonStyles.primaryBtnText,
                 vStyles.text,
-                textStyle,
-              ]}
-            >
+                textStyle]}>
               {label}
             </Text>
           ) : null}

@@ -1,10 +1,11 @@
 import React, { useCallback, useMemo, useState, useEffect } from 'react';
-import { FlatList, Pressable, RefreshControl, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
+import { BackHandler, FlatList, Pressable, RefreshControl, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import { CustomAlertAPI } from '../components/CustomAlert';
 import { Search, ListFilter, Check } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/ThemeContext';
 import { usePrintJob } from '../context/PrintJobContext';
+import { useRefreshOrders } from '../hooks/useRefreshOrders';
 import Header from '../components/Header';
 import OrderCard from '../components/OrderCard';
 import { EmptyState } from '../components/EmptyState';
@@ -36,8 +37,8 @@ const OrderSeparator = () => <View style={{ height: scale(8) }} />;
 export default function AllOrdersScreen({ navigation, route }: Props) {
   const { colors, commonStyles } = useTheme();
   const insets = useSafeAreaInsets();
-  const { orders, refreshOrders } = usePrintJob();
-  const [refreshing, setRefreshing] = useState(false);
+  const { orders } = usePrintJob();
+  const { isRefreshing, handleRefresh } = useRefreshOrders();
 
   const filterParam = route?.params?.filter;
   const [selectedFilters, setSelectedFilters] = useState<Filter[]>(() => parseFilterParam(filterParam));
@@ -46,12 +47,14 @@ export default function AllOrdersScreen({ navigation, route }: Props) {
 
   useEffect(() => { setSelectedFilters(parseFilterParam(filterParam)); }, [filterParam]);
 
-  const handleRefresh = useCallback(async () => {
-    setRefreshing(true);
-    try { await refreshOrders(); }
-    catch { CustomAlertAPI.alert('Connection Error', 'Unable to connect right now. Please try again later.'); }
-    finally { setRefreshing(false); }
-  }, [refreshOrders]);
+  useEffect(() => {
+    if (!showDropdown) return;
+    const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
+      setShowDropdown(false);
+      return true;
+    });
+    return () => subscription.remove();
+  }, [showDropdown]);
 
   const toggleFilter = useCallback((f: Filter) => {
     setSelectedFilters(prev => {
@@ -85,17 +88,17 @@ export default function AllOrdersScreen({ navigation, route }: Props) {
   }, [orders, selectedFilters, search]);
 
   const renderOrder = useCallback(
-    ({ item }: { item: Order }) => <OrderCard order={item} variant="list" onPress={o => navigation.navigate('OrderDetail', { orderId: o.id })} />,
+    ({ item }: { item: Order }) => <OrderCard order={item} onPress={o => navigation.navigate('OrderDetail', { orderId: o.id })} />,
     [navigation],
   );
 
   return (
     <View style={commonStyles.screenContainer}>
-      {showDropdown && <Pressable style={StyleSheet.absoluteFill} onPress={() => setShowDropdown(false)} />}
+      {showDropdown && <Pressable style={[StyleSheet.absoluteFill, { zIndex: 50 }]} onPress={() => setShowDropdown(false)} />}
       <Header title="All Orders" showBack onBack={useCallback(() => navigation.goBack(), [navigation])} />
 
       <View style={styles.headerSection}>
-        <Text style={[styles.headerTitle, { color: colors.text }]}>Manage and track orders</Text>
+        <Text weight="bold" style={[styles.headerTitle, { color: colors.text }]}>Manage and track orders</Text>
 
         <View style={styles.filterRow}>
           <View style={[styles.searchBox, { backgroundColor: colors.surface, borderColor: colors.border }]}>
@@ -123,7 +126,7 @@ export default function AllOrdersScreen({ navigation, route }: Props) {
                     <View style={[styles.checkbox, { borderColor: colors.border }, isSelected && { backgroundColor: colors.text, borderColor: colors.text }]}>
                       {isSelected && <Check size={moderateScale(12)} color={colors.background} strokeWidth={3} />}
                     </View>
-                    <Text style={[styles.dropdownItemText, { color: colors.text }, isSelected && styles.dropdownItemTextActive]}>{f.label}</Text>
+                    <Text weight={isSelected ? 'bold' : 'medium'} style={[styles.dropdownItemText, { color: colors.text }]}>{f.label}</Text>
                   </TouchableOpacity>
                 );
               })}
@@ -138,7 +141,7 @@ export default function AllOrdersScreen({ navigation, route }: Props) {
         renderItem={renderOrder}
         contentContainerStyle={[styles.listContent, { paddingBottom: insets.bottom + scale(32) }]}
         showsVerticalScrollIndicator={false}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={colors.textMuted} colors={[colors.primary]} progressBackgroundColor={colors.card} />}
+        refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} tintColor={colors.textMuted} colors={[colors.primary]} progressBackgroundColor={colors.card} />}
         ItemSeparatorComponent={OrderSeparator}
         ListEmptyComponent={<EmptyState title="No orders found" description="Try adjusting your search or filters." />}
       />
@@ -147,16 +150,15 @@ export default function AllOrdersScreen({ navigation, route }: Props) {
 }
 
 const styles = StyleSheet.create({
-  headerSection: { paddingHorizontal: scale(20), paddingTop: scale(24), marginBottom: scale(14), zIndex: 10 },
-  headerTitle: { fontSize: moderateScale(26), fontFamily: 'Geist-Bold', marginBottom: scale(14) },
+  headerSection: { paddingHorizontal: scale(20), paddingTop: scale(24), marginBottom: scale(20), zIndex: 10 },
+  headerTitle: { fontSize: moderateScale(26), marginBottom: scale(14) },
   filterRow: { flexDirection: 'row', alignItems: 'center', gap: scale(8), position: 'relative', zIndex: 10 },
   searchBox: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: scale(8), borderWidth: 1, borderRadius: scale(8), paddingHorizontal: scale(12), height: scale(42) },
-  searchInput: { flex: 1, fontSize: moderateScale(14), padding: 0, fontFamily: 'Geist-Regular' },
+  searchInput: { flex: 1, fontSize: moderateScale(14), padding: 0 },
   filterBtn: { width: scale(42), height: scale(42), borderRadius: scale(8), borderWidth: 1, justifyContent: 'center', alignItems: 'center' },
   dropdownPopover: { position: 'absolute', top: scale(48), right: 0, width: scale(190), borderRadius: scale(12), borderWidth: 1, paddingVertical: scale(6), zIndex: 100, elevation: 6, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 10 },
   dropdownItem: { flexDirection: 'row', alignItems: 'center', gap: scale(10), paddingVertical: scale(10), paddingHorizontal: scale(14) },
   checkbox: { width: scale(16), height: scale(16), borderRadius: scale(4), borderWidth: 1, justifyContent: 'center', alignItems: 'center' },
-  dropdownItemText: { fontSize: moderateScale(14), fontFamily: 'Geist-Medium' },
-  dropdownItemTextActive: { fontFamily: 'Geist-Bold' },
+  dropdownItemText: { fontSize: moderateScale(14) },
   listContent: { paddingHorizontal: scale(20) },
 });

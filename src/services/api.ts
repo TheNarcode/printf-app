@@ -1,12 +1,7 @@
 import ReactNativeBlobUtil from 'react-native-blob-util';
 import type { PrintSettings } from '../types';
 
-// The API runs locally — change this to your machine's local IP
-// when running on a physical device (localhost doesn't work from device).
-// For emulator, 10.0.2.2 maps to host machine's localhost.
 export const API_BASE_URL = 'https://printfs.thenarcode.workers.dev';
-
-// ── Settings mapping (App → API/IPP) ───────────────────────────────
 
 function mapColorMode(colorMode: 'color' | 'bw'): string {
   return colorMode === 'bw' ? 'Monochrome' : 'Color';
@@ -70,9 +65,7 @@ export function buildPrintConfig(
   };
 }
 
-// ── Timeout wrapper ─────────────────────────────────────────────────
-
-const API_TIMEOUT_MS = 15000; // 15 seconds
+const API_TIMEOUT_MS = 15000; 
 
 function fetchWithTimeout(
   url: string,
@@ -85,7 +78,7 @@ function fetchWithTimeout(
       controller.abort();
       reject(
         new Error(
-          'Request timed out. Please check your connection and try again.',
+          'Request timed out. Please check your connection and try again.'
         ),
       );
     }, timeoutMs);
@@ -111,8 +104,6 @@ function fetchWithTimeout(
       });
   });
 }
-
-// ── File Upload ─────────────────────────────────────────────────────
 
 export async function uploadFile(
   uri: string,
@@ -156,8 +147,6 @@ export async function uploadFile(
   }
 }
 
-// ── Order Creation ──────────────────────────────────────────────────
-
 export interface RazorpayOrderResponse {
   id: string;
   amount: number;
@@ -188,8 +177,6 @@ export async function createOrder(
 
   return response.json();
 }
-
-// ── Fetch Orders ────────────────────────────────────────────────────
 
 export interface ApiFile {
   fileId: string;

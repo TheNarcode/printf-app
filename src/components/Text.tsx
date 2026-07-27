@@ -4,34 +4,38 @@ import { Text as RNText, TextProps as RNTextProps } from 'react-native';
 export interface TextProps extends RNTextProps {
   weight?: 'regular' | 'medium' | 'semibold' | 'bold' | 'black';
   italic?: boolean;
+  mono?: boolean;
 }
 
 export function Text({
   style,
   weight = 'regular',
   italic = false,
+  mono = false,
   ...props
 }: TextProps) {
-  let fontFamily = 'Geist-Regular';
+  const prefix = mono ? 'GeistMono' : 'Geist';
+  let suffix = 'Regular';
 
   switch (weight) {
     case 'medium':
-      fontFamily = italic ? 'Geist-MediumItalic' : 'Geist-Medium';
+      suffix = italic ? 'MediumItalic' : 'Medium';
       break;
     case 'semibold':
-      fontFamily = italic ? 'Geist-SemiBoldItalic' : 'Geist-SemiBold';
+      suffix = italic ? 'SemiBoldItalic' : 'SemiBold';
       break;
     case 'bold':
-      fontFamily = italic ? 'Geist-BoldItalic' : 'Geist-Bold';
+      suffix = italic ? 'BoldItalic' : 'Bold';
       break;
     case 'black':
-      fontFamily = italic ? 'Geist-BlackItalic' : 'Geist-Black';
+      suffix = italic ? 'BlackItalic' : 'Black';
       break;
     default:
-      fontFamily = italic ? 'Geist-RegularItalic' : 'Geist-Regular';
+      suffix = italic ? 'RegularItalic' : 'Regular';
       break;
   }
 
-  // Inter font is linked natively, we can just apply the fontFamily
+  const fontFamily = `${prefix}-${suffix}`;
+
   return <RNText style={[{ fontFamily }, style]} {...props} />;
 }

@@ -64,7 +64,6 @@ export default function AppNavigator({ navigationRef }: Props) {
   };
 
   if (isLoading || isAuthenticating) {
-    // Return a spinner view while checking auth to prevent blank screen flash
     return (
       <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center', zIndex: 9999 }]}>
         <CustomSpinner size={32} label={isAuthenticating ? 'Authenticating...' : 'Loading...'} />
@@ -85,8 +84,7 @@ export default function AppNavigator({ navigationRef }: Props) {
               const timeToWait = Math.max(0, 250 - (Date.now() - start));
               setTimeout(() => setIsNavigating(false), timeToWait);
             });
-          }}
-        >
+          }}>
           <Stack.Navigator
             screenOptions={{
               headerShown: false,
@@ -99,8 +97,7 @@ export default function AppNavigator({ navigationRef }: Props) {
                 <Stack.Screen
                   name="Login"
                   component={LoginScreen}
-                  options={{ animation: 'none' }}
-                />
+                  options={{ animation: 'none' }}/>
                 <Stack.Screen name="Privacy" component={PrivacyScreen} />
                 <Stack.Screen name="Terms" component={TermsScreen} />
               </>
@@ -113,15 +110,13 @@ export default function AppNavigator({ navigationRef }: Props) {
                 <Stack.Screen
                   name="OrderResult"
                   component={OrderResultScreen}
-                  options={{ animation: 'none', gestureEnabled: false }}
-                />
+                  options={{ animation: 'none', gestureEnabled: false }}/>
                 <Stack.Screen name="OrderDetail" component={OrderDetailScreen} />
                 <Stack.Screen name="AllOrders" component={AllOrdersScreen} />
                 <Stack.Screen
                   name="Settings"
                   component={SettingsScreen}
-                  options={{ animation: 'none' }}
-                />
+                  options={{ animation: 'none' }}/>
                 <Stack.Screen name="Privacy" component={PrivacyScreen} />
                 <Stack.Screen name="Terms" component={TermsScreen} />
               </>
@@ -134,9 +129,7 @@ export default function AppNavigator({ navigationRef }: Props) {
           <CustomSpinner size={32} label="Loading..." />
         </View>
       )}
-
       <NetworkBanner />
-
       </View>
     </NetworkProvider>
   );

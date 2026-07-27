@@ -1,25 +1,23 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
-import { FileText } from 'lucide-react-native';
+import { FileText, Lock } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import RazorpayCheckout from 'react-native-razorpay';
 import { RAZORPAY_KEY_ID } from '@env';
-
 import { useTheme } from '../theme/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import { usePrintJob } from '../context/PrintJobContext';
 import { useNetwork } from '../context/NetworkContext';
-
 import Header from '../components/Header';
 import { Button } from '../components/Button';
 import { Badge } from '../components/Badge';
 import { Card } from '../components/Card';
-import { SecuredBadge } from '../components/SecuredBadge';
 import { formatCurrency, formatFileSize } from '../utils/formatters';
 import { Text } from '../components/Text';
 import { scale, moderateScale } from '../utils/responsive';
 import { createOrder, buildPrintConfig } from '../services/api';
 import { getFileId } from '../services/fileUploadManager';
+import { getPaymentErrorReason } from '../utils/razorpay';
 
 interface Props {
   navigation: any;
@@ -85,21 +83,13 @@ export default function PaymentScreen({ navigation }: Props) {
 
       refreshOrders().catch(() => {});
       safeNavigateResult({ success: true, orderId: rpOrder.localOrderId });
-    } catch (err: any) {
-      console.error('Payment flow error:', err);
-      const msg = err?.message || err?.description || '';
-      const code = err?.code;
-
-      if (code === 0 || code === 2 || msg.toLowerCase().includes('cancel') || msg.toLowerCase().includes('dismiss')) {
+    } catch (err: unknown) {
+      const reason = getPaymentErrorReason(err);
+      if (reason === 'cancelled') {
         safeNavigateResult({ success: false, reason: 'cancelled' });
-      } else if (
-        msg.includes('Unable to connect') ||
-        msg.includes('timed out') ||
-        msg.includes('Unable to upload') ||
-        msg.includes('network')
-      ) {
+      } else if (reason === 'timeout') {
         safeNavigateResult({ success: false, reason: 'timeout' });
-      } else if (msg.includes('Authentication required')) {
+      } else if (reason === 'session') {
         safeNavigateResult({ success: false, reason: 'session' });
       } else {
         safeNavigateResult({ success: false, reason: 'payment_failed' });
@@ -129,14 +119,14 @@ export default function PaymentScreen({ navigation }: Props) {
                   <FileText size={moderateScale(14)} color={colors.textSecondary} strokeWidth={1.5} />
                 </View>
                 <View style={styles.fileInfo}>
-                  <Text style={[styles.fileName, { color: colors.text }]} numberOfLines={1}>
+                  <Text weight="medium" style={[styles.fileName, { color: colors.text }]} numberOfLines={1}>
                     {item.file.name}
                   </Text>
                   <Text style={[styles.fileMeta, { color: colors.textSecondary }]}>
                     {item.file.pages} pages · {formatFileSize(item.file.size)}
                   </Text>
                 </View>
-                <Text style={[styles.filePrice, { color: colors.text }]}>{formatCurrency(item.price)}</Text>
+                <Text weight="bold" style={[styles.filePrice, { color: colors.text }]}>{formatCurrency(item.price)}</Text>
               </View>
               <View style={styles.fileTags}>
                 <Badge label={item.settings.colorMode === 'color' ? 'Color' : 'B&W'} />
@@ -157,16 +147,16 @@ export default function PaymentScreen({ navigation }: Props) {
                 <Text style={[styles.priceLabel, { color: colors.textSecondary }]} numberOfLines={1}>
                   {item.file.name.replace(/\.[^/.]+$/, '')}
                 </Text>
-                <Text style={[styles.priceValue, { color: colors.text }]}>{formatCurrency(item.price)}</Text>
+                <Text weight="medium" style={[styles.priceValue, { color: colors.text }]}>{formatCurrency(item.price)}</Text>
               </View>
             ))}
             <View style={[commonStyles.rowBetween, styles.feeRow, { borderTopColor: colors.border }]}>
               <Text style={[styles.priceLabel, { color: colors.textSecondary }]}>Convenience fee</Text>
-              <Text style={[styles.priceValue, { color: colors.text }]}>{formatCurrency(fee)}</Text>
+              <Text weight="medium" style={[styles.priceValue, { color: colors.text }]}>{formatCurrency(fee)}</Text>
             </View>
             <View style={[commonStyles.rowBetween, styles.totalRow, { borderTopColor: colors.border }]}>
-              <Text style={[styles.totalLabel, { color: colors.text }]}>Total</Text>
-              <Text style={[styles.totalValue, { color: colors.text }]}>{formatCurrency(total)}</Text>
+              <Text weight="semibold" style={[styles.totalLabel, { color: colors.text }]}>Total</Text>
+              <Text weight="bold" style={[styles.totalValue, { color: colors.text }]}>{formatCurrency(total)}</Text>
             </View>
           </Card>
         </View>
@@ -178,7 +168,12 @@ export default function PaymentScreen({ navigation }: Props) {
           onPress={handlePay}
           isLoading={isPaying}
         />
-        <SecuredBadge label="Secured by Razorpay" />
+        <View style={styles.securityNotice}>
+          <Lock size={moderateScale(10)} color={colors.textMuted} />
+          <Text style={[styles.securityText, { color: colors.textMuted }]}>
+            Secured by Razorpay
+          </Text>
+        </View>
       </View>
     </View>
   );
@@ -190,15 +185,26 @@ const styles = StyleSheet.create({
   fileCard: { padding: scale(14), marginBottom: scale(8) },
   fileIcon: { width: scale(32), height: scale(32), borderRadius: scale(8), justifyContent: 'center', alignItems: 'center' },
   fileInfo: { flex: 1, marginLeft: scale(10) },
-  fileName: { fontSize: moderateScale(14), fontFamily: 'Geist-Medium' },
+  securityNotice: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: scale(12),
+    alignSelf: 'center',
+  },
+  securityText: {
+    fontSize: moderateScale(11),
+    marginLeft: scale(4),
+  },
+  fileName: { fontSize: moderateScale(14) },
   fileMeta: { fontSize: moderateScale(10), marginTop: 2 },
-  filePrice: { fontSize: moderateScale(14), fontFamily: 'Geist-Bold' },
+  filePrice: { fontSize: moderateScale(14) },
   fileTags: { flexDirection: 'row', flexWrap: 'wrap', gap: scale(4), marginTop: scale(10) },
   priceCard: { padding: scale(14) },
   priceLabel: { fontSize: moderateScale(13), flex: 1, marginRight: scale(12) },
-  priceValue: { fontSize: moderateScale(13), fontFamily: 'Geist-Medium' },
+  priceValue: { fontSize: moderateScale(13) },
   feeRow: { borderTopWidth: StyleSheet.hairlineWidth, paddingTop: scale(12), marginTop: scale(8) },
   totalRow: { borderTopWidth: 1, paddingTop: scale(14), marginTop: scale(10) },
-  totalLabel: { fontSize: moderateScale(16), fontFamily: 'Geist-SemiBold' },
-  totalValue: { fontSize: moderateScale(22), fontFamily: 'Geist-Bold' },
+  totalLabel: { fontSize: moderateScale(16) },
+  totalValue: { fontSize: moderateScale(22) },
 });

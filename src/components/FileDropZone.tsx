@@ -21,7 +21,7 @@ const FileDropZone = memo(({onBrowse}: FileDropZoneProps) => {
         <View style={[styles.iconCircle, {backgroundColor: colors.primaryBg}]}>
           <CloudUpload size={moderateScale(24)} color={colors.textSecondary} strokeWidth={1.5} />
         </View>
-        <Text style={[styles.title, {color: colors.text}]}>Upload files here</Text>
+        <Text weight="semibold" style={[styles.title, {color: colors.text}]}>Upload files here</Text>
         <Text style={[styles.subtitle, {color: colors.textMuted}]}>
           PDF, JPEG, JPG, PNG supported
         </Text>
@@ -45,7 +45,7 @@ const styles = StyleSheet.create({
     width: scale(48), height: scale(48), borderRadius: scale(24),
     justifyContent: 'center', alignItems: 'center', marginBottom: scale(6),
   },
-  title: {fontSize: moderateScale(16), fontFamily: 'Geist-SemiBold'},
+  title: {fontSize: moderateScale(16)},
   subtitle: {fontSize: moderateScale(12), textAlign: 'center'},
 });
 

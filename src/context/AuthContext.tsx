@@ -14,8 +14,6 @@ import { clearAllStorage } from '../services/storage';
 import { GOOGLE_CLIENT_ID } from '@env';
 import { CustomAlertAPI } from '../components/CustomAlert';
 
-
-
 interface AuthContextValue {
   user: UserProfile | null;
   idToken: string | null;
@@ -44,7 +42,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
 
-  // Initialize GoogleSignin only once
   useEffect(() => {
     GoogleSignin.configure({
       webClientId: GOOGLE_CLIENT_ID,
@@ -52,7 +49,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
-  // Listen to Firebase Auth state
   useEffect(() => {
     const subscriber = auth().onAuthStateChanged(async (firebaseUser) => {
       if (firebaseUser) {
@@ -68,7 +64,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const token = await firebaseUser.getIdToken();
           setIdToken(token);
         } catch (e) {
-          console.warn('Failed to get initial token:', e);
+          // silent fallback
         }
       } else {
         setUser(null);
@@ -77,10 +73,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setIsLoading(false);
     });
     
-    return subscriber; // unsubscribe on unmount
+    return subscriber; 
   }, []);
-
-  // Sign in with Google
   const signInWithGoogle = useCallback(async () => {
     setIsAuthenticating(true);
     try {
@@ -92,20 +86,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw new Error('Google Sign-In returned no ID token');
       }
 
-      // Yield to the JS event loop and Native UI thread to let the CustomSpinner 
-      // animation resume smoothly after the Google popup modal closes, before 
-      // the heavy Firebase auth blocks the bridge.
       await new Promise(resolve => setTimeout(() => resolve(true), 150));
 
-      // Create a Google credential with the token
       const googleCredential = auth.GoogleAuthProvider.credential(idToken);
 
-      // Sign-in the user with the credential
       await auth().signInWithCredential(googleCredential);
       
     } catch (error: any) {
-      console.error('[Auth] Sign in error:', error);
-      
       let message = 'An error occurred during Google Sign-In. Please try again.';
       if (error.code === statusCodes.SIGN_IN_CANCELLED || error.message?.includes('CANCELLED')) {
         message = 'Sign in was cancelled.';
@@ -116,58 +103,46 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       
       CustomAlertAPI.alert('Login Failed', message);
-      // Don't throw — let the UI stay on login screen
     } finally {
       setIsAuthenticating(false);
     }
   }, []);
 
-  // Sign out
   const signOut = useCallback(async () => {
     setIsLoading(true);
     try {
-      // Sign out from Google (revokes permissions locally)
       try {
         await GoogleSignin.signOut();
-      } catch (e) {
-        // Ignore if not signed in via Google
-      }
-      // Sign out from Firebase
+      } catch (e) { }
+      
       await auth().signOut();
       await clearAllStorage();
     } catch (error) {
-      console.error('Sign out error:', error);
+      // silent catch
     } finally {
       setIsLoading(false);
     }
   }, []);
 
-  // Get Valid Token (Refreshes silently if expired)
   const getValidToken = useCallback(async (): Promise<string | null> => {
     const currentUser = auth().currentUser;
     if (!currentUser) return null;
     
     try {
-      // forceRefresh is false by default, it will only refresh if expired
       const token = await currentUser.getIdToken();
       if (token !== idToken) {
         setIdToken(token);
       }
       return token;
     } catch (error) {
-      console.warn('Failed to get valid token:', error);
-      return idToken; // Fallback to current token if offline
+      return idToken;
     }
   }, [idToken]);
-
-  // Keep a ref to getValidToken so the FCM effect never needs to re-run
-  // just because the token rotated — it always calls the latest version.
   const getValidTokenRef = useRef(getValidToken);
   useEffect(() => {
     getValidTokenRef.current = getValidToken;
   });
 
-  // Register FCM token only when a user session starts (user.id changes)
   const userId = user?.id ?? null;
   useEffect(() => {
     if (!userId) return;
@@ -179,7 +154,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     registerFCMToken(stableGetter);
     const unsubscribe = setupTokenRefreshListener(stableGetter);
     return unsubscribe;
-  }, [userId]); // only fires on sign-in / sign-out
+  }, [userId]); 
 
   const value = useMemo(
     () => ({

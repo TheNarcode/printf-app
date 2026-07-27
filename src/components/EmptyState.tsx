@@ -44,8 +44,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
           label={actionLabel}
           onPress={onAction}
           variant="secondary"
-          style={styles.actionBtn}
-        />
+          style={styles.actionBtn}/>
       )}
     </View>
   );

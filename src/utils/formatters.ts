@@ -1,7 +1,7 @@
 import type {Order, SpendingSummary} from '../types';
 
 export function formatFileSize(bytes: number): string {
-  if (bytes === 0) return '0 B';
+  if (!bytes || bytes <= 0) return '0 B';
   const units = ['B', 'KB', 'MB', 'GB'];
   const i = Math.floor(Math.log(bytes) / Math.log(1024));
   const size = bytes / Math.pow(1024, i);
@@ -9,14 +9,17 @@ export function formatFileSize(bytes: number): string {
 }
 
 export function formatCurrency(amount: number): string {
-  return `\u20B9${amount.toFixed(2)}`;
+  const safeAmount = typeof amount === 'number' && !isNaN(amount) ? amount : 0;
+  return `\u20B9${safeAmount.toFixed(2)}`;
 }
 
 export function truncateFilename(name: string, maxLen: number = 24): string {
-  if (name.length <= maxLen) return name;
-  const ext = name.lastIndexOf('.') !== -1 ? name.slice(name.lastIndexOf('.')) : '';
-  const base = name.slice(0, name.lastIndexOf('.') !== -1 ? name.lastIndexOf('.') : name.length);
-  return `${base.slice(0, maxLen - ext.length - 3)}...${ext}`;
+  if (!name || name.length <= maxLen) return name || '';
+  const dotIdx = name.lastIndexOf('.');
+  const ext = dotIdx > 0 ? name.slice(dotIdx) : '';
+  const base = dotIdx > 0 ? name.slice(0, dotIdx) : name;
+  const availBaseLen = Math.max(1, maxLen - ext.length - 3);
+  return `${base.slice(0, availBaseLen)}...${ext}`;
 }
 
 export function generateOrderRef(): string {
@@ -37,27 +40,32 @@ export function calculateFilePrice(
   copies: number = 1,
   pagesPerSheet: number = 1,
 ): number {
-  const effectiveSheets = Math.ceil(pages / pagesPerSheet);
+  const safePages = Math.max(1, pages || 1);
+  const safePps = Math.max(1, pagesPerSheet || 1);
+  const safeCopies = Math.max(1, copies || 1);
+
+  const effectiveSheets = Math.ceil(safePages / safePps);
   let pricePerSheet = 0;
   if (colorMode === 'color') {
     pricePerSheet = sides === 'single' ? 6 : 12;
   } else {
     if (sides === 'single') {
-      pricePerSheet = (effectiveSheets * copies === 1) ? 3 : 2.5;
+      pricePerSheet = (effectiveSheets * safeCopies === 1) ? 3 : 2.5;
     } else {
       pricePerSheet = 2;
     }
   }
 
-  return effectiveSheets * copies * pricePerSheet;
+  return effectiveSheets * safeCopies * pricePerSheet;
 }
 
 export function calculateConvenienceFee(subtotal: number): number {
-  return Math.round(subtotal * 0.05 * 100) / 100;
+  const safeSubtotal = Math.max(0, subtotal || 0);
+  return Math.round(safeSubtotal * 0.05 * 100) / 100;
 }
 
 export function getFileTypeColor(filename: string): string {
-  const ext = filename.split('.').pop()?.toLowerCase();
+  const ext = filename?.split('.').pop()?.toLowerCase();
   switch (ext) {
     case 'pdf': return '#E74C3C';
     case 'doc': case 'docx': return '#3498DB';
@@ -67,21 +75,25 @@ export function getFileTypeColor(filename: string): string {
 }
 
 export function getFileExtLabel(filename: string): string {
-  return (filename.split('.').pop()?.toUpperCase()) || 'FILE';
+  return (filename?.split('.').pop()?.toUpperCase()) || 'FILE';
 }
 
 export function estimatePageCount(sizeBytes: number, fileType: string): number {
-  if (fileType.includes('image')) return 1;
-  return Math.max(1, Math.ceil(sizeBytes / 1024 / 100));
+  if (fileType?.includes('image')) return 1;
+  return Math.max(1, Math.ceil((sizeBytes || 0) / 1024 / 100));
 }
 
 export function formatDate(isoDate: string): string {
+  if (!isoDate) return '';
   const d = new Date(isoDate);
+  if (isNaN(d.getTime())) return '';
   return d.toLocaleDateString('en-IN', {month: 'short', day: 'numeric', year: 'numeric'});
 }
 
 export function formatDateTime(isoDate: string): string {
+  if (!isoDate) return '';
   const d = new Date(isoDate);
+  if (isNaN(d.getTime())) return '';
   return d.toLocaleString('en-IN', {
     month: 'short', day: 'numeric',
     hour: '2-digit', minute: '2-digit', hour12: true,
@@ -89,7 +101,9 @@ export function formatDateTime(isoDate: string): string {
 }
 
 export function formatTime(isoDate: string): string {
+  if (!isoDate) return '';
   const d = new Date(isoDate);
+  if (isNaN(d.getTime())) return '';
   return d.toLocaleTimeString('en-IN', {hour: '2-digit', minute: '2-digit', hour12: true});
 }
 
@@ -108,19 +122,22 @@ export function calculateSpending(
   } else {
     start = new Date(now.getFullYear(), now.getMonth(), 1);
   }
-  const filtered = orders.filter(
+
+  const safeOrders = orders || [];
+  const filtered = safeOrders.filter(
     o => new Date(o.createdAt) >= start && o.paid,
   );
-  
+
   let bwPages = 0;
   let colorPages = 0;
-  
+
   filtered.forEach(o => {
-    o.files.forEach(f => {
-      const pagesPerSheet = f.settings.pagesPerSheet || 1;
-      const effectiveSheets = Math.ceil(f.file.pages / pagesPerSheet);
-      const totalForFile = effectiveSheets * (f.settings.copies || 1);
-      if (f.settings.colorMode === 'color') {
+    (o.files || []).forEach(f => {
+      const pagesPerSheet = f.settings?.pagesPerSheet || 1;
+      const pages = f.file?.pages || 1;
+      const effectiveSheets = Math.ceil(pages / pagesPerSheet);
+      const totalForFile = effectiveSheets * (f.settings?.copies || 1);
+      if (f.settings?.colorMode === 'color') {
         colorPages += totalForFile;
       } else {
         bwPages += totalForFile;
@@ -129,7 +146,7 @@ export function calculateSpending(
   });
 
   return {
-    totalSpent: filtered.reduce((s, o) => s + o.totalPrice, 0),
+    totalSpent: filtered.reduce((s, o) => s + (o.totalPrice || 0), 0),
     orderCount: filtered.length,
     pageCount: bwPages + colorPages,
     bwPages,
@@ -139,7 +156,7 @@ export function calculateSpending(
 
 export function getStatusColor(status: string, colors: any) {
   switch (status) {
-    case 'completed': return {bg: colors.successBg, text: colors.success, border: colors.successBorder};
+    case 'completed': case 'collected': return {bg: colors.successBg, text: colors.success, border: colors.successBorder};
     case 'printing': case 'processing': return {bg: colors.primaryBg, text: colors.primary, border: colors.primaryBorder};
     case 'pending': return {bg: colors.warningBg, text: colors.warning, border: colors.warningBorder};
     case 'failed': return {bg: colors.dangerBg, text: colors.danger, border: colors.dangerBorder || (colors.danger + '30')};
@@ -151,6 +168,7 @@ export function getStatusLabel(status: string): string {
   const map: Record<string, string> = {
     pending: 'Pending', processing: 'Processing',
     printing: 'Printing', completed: 'Completed', failed: 'Failed',
+    collected: 'Ready for Pickup',
   };
   return map[status] || status;
 }

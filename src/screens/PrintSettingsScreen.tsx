@@ -187,7 +187,7 @@ export default function PrintSettingsScreen({ navigation }: Props) {
         const result = await generatePdfThumbnails(file.uri, selectedPages);
         if (!cancelled) setThumbnails(result);
       } catch (e) {
-        console.warn('Thumbnail generation failed:', e);
+        // silent fallback
       } finally {
         if (!cancelled) setThumbLoading(false);
       }
@@ -205,7 +205,7 @@ export default function PrintSettingsScreen({ navigation }: Props) {
             <FileText size={moderateScale(20)} color={colors.primary} strokeWidth={1.5} />
           </View>
           <View style={styles.fileCardInfo}>
-            <Text style={[styles.fileCardName, { color: colors.text }]} numberOfLines={1}>{item.name}</Text>
+            <Text weight="semibold" style={[styles.fileCardName, { color: colors.text }]} numberOfLines={1}>{item.name}</Text>
             <Text style={[styles.fileCardMeta, { color: colors.textMuted }]}>
               {formatFileSize(item.size)} · {item.pages} {item.pages === 1 ? 'page' : 'pages'}
             </Text>
@@ -327,7 +327,7 @@ const styles = StyleSheet.create({
   fileCard: { marginHorizontal: scale(20), marginTop: scale(12), marginBottom: scale(6), padding: scale(10), borderRadius: scale(12), borderWidth: 1, flexDirection: 'row', alignItems: 'center', gap: scale(10) },
   fileIconBox: { width: scale(36), height: scale(36), borderRadius: scale(8), justifyContent: 'center', alignItems: 'center' },
   fileCardInfo: { flex: 1 },
-  fileCardName: { fontSize: moderateScale(13), fontFamily: 'Geist-SemiBold', marginBottom: 2 },
+  fileCardName: { fontSize: moderateScale(13), marginBottom: 2 },
   fileCardMeta: { fontSize: moderateScale(11) },
   dotsRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: scale(5), marginBottom: scale(12), marginTop: scale(4) },
   dot: { width: scale(5), height: scale(5), borderRadius: scale(3) },

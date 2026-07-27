@@ -13,12 +13,12 @@ export function useDoubleBackToExit() {
         const now = Date.now();
         if (now - lastBackPressTime.current < 2000) {
           BackHandler.exitApp();
-          return true; // Event is handled
+          return true; 
         }
         
         lastBackPressTime.current = now;
         ToastAndroid.show('Press back again to exit', ToastAndroid.SHORT);
-        return true; // Prevent default behavior (exiting app)
+        return true;
       };
 
       const backHandler = BackHandler.addEventListener('hardwareBackPress', onBackPress);

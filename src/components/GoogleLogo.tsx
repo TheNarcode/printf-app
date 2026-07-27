@@ -5,7 +5,6 @@ interface Props {
   size?: number;
 }
 
-// Official multicolor Google "G" logo
 export default function GoogleLogo({size = 20}: Props) {
   return (
     <Svg width={size} height={size} viewBox="0 0 48 48">

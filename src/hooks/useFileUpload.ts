@@ -1,7 +1,9 @@
 import {useCallback, useState} from 'react';
 import {Platform} from 'react-native';
+import {Buffer} from 'buffer';
 import type {UploadedFile} from '../types';
 import {generateId} from '../utils/formatters';
+import {CustomAlertAPI} from '../components/CustomAlert';
 import {PDFDocument} from 'pdf-lib';
 import ReactNativeBlobUtil from 'react-native-blob-util';
 
@@ -14,17 +16,11 @@ interface DocumentPickerResponse {
   fileCopyUri?: string | null;
 }
 
-/**
- * Read a PDF file and return the actual page count.
- * Falls back to 1 if parsing fails.
- */
 async function getActualPageCount(uri: string, fileType: string): Promise<number> {
-  // Images are always 1 page
   if (fileType.includes('image')) {
     return 1;
   }
 
-  // Only parse PDFs
   if (!fileType.includes('pdf')) {
     return 1;
   }
@@ -32,18 +28,14 @@ async function getActualPageCount(uri: string, fileType: string): Promise<number
   try {
     const filePath = uri.replace('file://', '');
     const base64 = await ReactNativeBlobUtil.fs.readFile(filePath, 'base64');
-    const bytes = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+    const bytes = Buffer.from(base64, 'base64');
     const pdfDoc = await PDFDocument.load(bytes, {ignoreEncryption: true});
     return pdfDoc.getPageCount();
   } catch (err) {
-    console.warn('Failed to parse PDF for page count:', err);
     return 1;
   }
 }
 
-/**
- * Hook for handling document picking using react-native-document-picker.
- */
 export function useFileUpload() {
   const [isReading, setIsReading] = useState(false);
 
@@ -60,7 +52,6 @@ export function useFileUpload() {
       });
 
       setIsReading(true);
-      // Parse each file to get accurate page count
       const files: UploadedFile[] = [];
       for (const doc of results) {
         if (!doc.uri) continue;
@@ -85,7 +76,7 @@ export function useFileUpload() {
       if (err instanceof Error && err.message.includes('Canceled')) {
         return [];
       }
-      console.error('File pick error:', err);
+      CustomAlertAPI.alert('File Selection Failed', 'Unable to process the selected file. Please try selecting a valid PDF or image.');
       return [];
     }
   }, []);

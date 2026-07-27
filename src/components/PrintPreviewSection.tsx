@@ -91,7 +91,7 @@ function PageCell({
         ) : (
           <>
             <FileText size={moderateScale(pps > 1 ? 10 : 18)} color="#ccc" strokeWidth={1} />
-            <Text style={{ fontSize: moderateScale(7), color: '#bbb', marginTop: 2, fontFamily: 'GeistMono-Regular' }}>
+            <Text mono style={{ fontSize: moderateScale(7), color: '#bbb', marginTop: 2 }}>
               Page {(pageIdx ?? 0) + 1}
             </Text>
           </>
@@ -277,7 +277,6 @@ export function PrintPreviewSection({
         </View>
       </View>
 
-      {/* FULLSCREEN PREVIEW MODAL */}
       <Modal visible={showFullscreen} animationType="fade" statusBarTranslucent onRequestClose={closeFullscreen}>
         <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={colors.background} />
         <View style={[styles.fsContainer, { backgroundColor: colors.background, paddingTop: insets.top }]}>
@@ -351,17 +350,17 @@ export function PrintPreviewSection({
 const styles = StyleSheet.create({
   previewSection: { paddingHorizontal: scale(20), marginBottom: scale(20) },
   previewHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: scale(8) },
-  sectionLabel: { fontSize: moderateScale(10), fontFamily: 'Geist-Bold', letterSpacing: 1, textTransform: 'uppercase' },
+  sectionLabel: { fontSize: moderateScale(10), letterSpacing: 1, textTransform: 'uppercase' },
   previewContainer: { borderRadius: scale(12), padding: scale(12), alignItems: 'center' },
   paperSheet: { backgroundColor: '#FFFFFF', elevation: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.12, shadowRadius: 6, borderRadius: scale(2), overflow: 'hidden' },
   ppsGrid: { flex: 1, flexDirection: 'row', flexWrap: 'wrap' },
   pageCell: { flex: 1, width: '100%', height: '100%' },
   sheetNav: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: scale(10), gap: scale(8) },
   sheetNavBtn: { padding: scale(6) },
-  sheetNavText: { fontSize: moderateScale(10), fontFamily: 'GeistMono-Regular', letterSpacing: 0.3 },
+  sheetNavText: { fontSize: moderateScale(10), letterSpacing: 0.3 },
   fsContainer: { flex: 1 },
   fsHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: scale(20), paddingBottom: scale(10), borderBottomWidth: StyleSheet.hairlineWidth },
-  fsTitle: { fontSize: moderateScale(19), fontFamily: 'Geist-SemiBold' },
+  fsTitle: { fontSize: moderateScale(19) },
   fsPreviewArea: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   fsNavBar: { paddingHorizontal: scale(20), paddingTop: scale(10), borderTopWidth: StyleSheet.hairlineWidth },
 });

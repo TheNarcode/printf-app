@@ -21,11 +21,8 @@ export const CustomSpinner: React.FC<CustomSpinnerProps> = ({
   style,
 }) => {
   const { colors } = useTheme();
-
-  // Normalize size for compatibility with ActivityIndicator props or explicit numbers
   const spinnerSize = typeof size === 'number' ? size : size === 'large' ? 32 : 18;
   const spinnerColor = color || colors.primary;
-
   const spinValue = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -69,7 +66,7 @@ export const CustomSpinner: React.FC<CustomSpinnerProps> = ({
   }
 
   const isHorizontal = direction === 'horizontal';
-
+  
   return (
     <View
       style={[
@@ -78,9 +75,7 @@ export const CustomSpinner: React.FC<CustomSpinnerProps> = ({
           justifyContent: 'center',
           flexDirection: isHorizontal ? 'row' : 'column',
         },
-        style,
-      ]}
-    >
+        style]}>
       {spinnerCircle}
       <Text
         weight="medium"
@@ -91,12 +86,9 @@ export const CustomSpinner: React.FC<CustomSpinnerProps> = ({
             marginTop: isHorizontal ? 0 : 16,
             marginLeft: isHorizontal ? 10 : 0,
           },
-          labelStyle,
-        ]}
-      >
+          labelStyle]}>
         {label}
       </Text>
     </View>
   );
 };
-

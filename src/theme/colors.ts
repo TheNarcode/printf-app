@@ -39,25 +39,22 @@ export const fontWeight = {
   black: '800' as const,
 };
 
-// ─── ZINC-ONLY PALETTE ───────────────────────────────────────
-// No blue anywhere. Accent = zinc-900 (light) / zinc-100 (dark).
-// Status colors (green/red/amber) kept for semantic badges only.
 
 export const lightColors = {
-  background: '#FAFAFA',       // zinc-50
+  background: '#FAFAFA',       
   backgroundSecondary: '#FFFFFF',
-  surface: '#F4F4F5',          // zinc-100
+  surface: '#F4F4F5',         
   card: '#FFFFFF',
   cardElevated: '#FFFFFF',
-  text: '#18181B',             // zinc-900
-  textSecondary: '#52525B',    // zinc-600
-  textMuted: '#A1A1AA',        // zinc-400
-  primary: '#18181B',          // zinc-900 — the accent
+  text: '#18181B',            
+  textSecondary: '#52525B',    
+  textMuted: '#A1A1AA',        
+  primary: '#18181B',         
   primaryBg: 'rgba(24,24,27,0.05)',
   primaryBorder: 'rgba(24,24,27,0.15)',
-  border: '#E4E4E7',          // zinc-200
-  borderLight: '#F4F4F5',     // zinc-100
-  borderDashed: '#D4D4D8',    // zinc-300
+  border: '#E4E4E7',          
+  borderLight: '#F4F4F5',     
+  borderDashed: '#D4D4D8',    
   success: '#16A34A',
   successBg: 'rgba(22,163,74,0.08)',
   successBorder: 'rgba(22,163,74,0.20)',
@@ -80,20 +77,20 @@ export const lightColors = {
 export type ThemeColors = typeof lightColors;
 
 export const darkColors: ThemeColors = {
-  background: '#09090B',       // zinc-950
+  background: '#09090B',       
   backgroundSecondary: '#0F0F12',
-  surface: '#18181B',          // zinc-900
+  surface: '#18181B',          
   card: '#131316',
   cardElevated: '#1C1C20',
-  text: '#FAFAFA',             // zinc-50
-  textSecondary: '#A1A1AA',    // zinc-400
-  textMuted: '#71717A',        // zinc-500
-  primary: '#F4F4F5',          // zinc-100 — the accent
+  text: '#FAFAFA',             
+  textSecondary: '#A1A1AA',    
+  textMuted: '#71717A',        
+  primary: '#F4F4F5',          
   primaryBg: 'rgba(244,244,245,0.06)',
   primaryBorder: 'rgba(244,244,245,0.15)',
-  border: '#27272A',          // zinc-800
+  border: '#27272A',          
   borderLight: '#1C1C20',
-  borderDashed: '#3F3F46',    // zinc-700
+  borderDashed: '#3F3F46',    
   success: '#22C55E',
   successBg: 'rgba(34,197,94,0.10)',
   successBorder: 'rgba(34,197,94,0.25)',

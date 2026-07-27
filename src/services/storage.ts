@@ -1,49 +1,37 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import type {ThemeMode, Order} from '../types';
+import type { ThemeMode, Order } from '../types';
 
 const KEYS = {
   THEME_MODE: 'printf_theme_mode',
   ORDERS: 'printf_orders',
 } as const;
 
-// ── Auth ────────────────────────────────────────────────────────────
-// (Auth is now handled natively by @react-native-firebase/auth)
-
-// ── Theme ───────────────────────────────────────────────────────────
-
-export async function getStoredThemeMode(): Promise<ThemeMode | null> {
+async function getItem<T>(key: string, fallback: T): Promise<T> {
   try {
-    const val = await AsyncStorage.getItem(KEYS.THEME_MODE);
-    return val as ThemeMode | null;
+    const raw = await AsyncStorage.getItem(key);
+    return raw !== null ? JSON.parse(raw) : fallback;
   } catch {
-    return null;
+    return fallback;
   }
 }
 
-export async function setStoredThemeMode(mode: ThemeMode): Promise<void> {
+async function setItem<T>(key: string, value: T): Promise<void> {
   try {
-    await AsyncStorage.setItem(KEYS.THEME_MODE, mode);
+    await AsyncStorage.setItem(key, JSON.stringify(value));
   } catch {}
 }
 
-// ── Orders ──────────────────────────────────────────────────────────
+export const getStoredThemeMode = (): Promise<ThemeMode | null> =>
+  getItem<ThemeMode | null>(KEYS.THEME_MODE, null);
 
-export async function getStoredOrders(): Promise<Order[]> {
-  try {
-    const json = await AsyncStorage.getItem(KEYS.ORDERS);
-    return json ? JSON.parse(json) : [];
-  } catch {
-    return [];
-  }
-}
+export const setStoredThemeMode = (mode: ThemeMode): Promise<void> =>
+  setItem(KEYS.THEME_MODE, mode);
 
-export async function setStoredOrders(orders: Order[]): Promise<void> {
-  try {
-    await AsyncStorage.setItem(KEYS.ORDERS, JSON.stringify(orders));
-  } catch {}
-}
+export const getStoredOrders = (): Promise<Order[]> =>
+  getItem<Order[]>(KEYS.ORDERS, []);
 
-// ── Clear All ───────────────────────────────────────────────────────
+export const setStoredOrders = (orders: Order[]): Promise<void> =>
+  setItem(KEYS.ORDERS, orders);
 
 export async function clearAllStorage(): Promise<void> {
   try {

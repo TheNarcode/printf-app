@@ -38,7 +38,7 @@ export interface Order {
   printerName: string;
   totalPages: number;
   totalCopies: number;
-  progress: number; // 0-100
+  progress: number;
   estimatedCompletion?: string;
   paymentRequestId?: string;
 }

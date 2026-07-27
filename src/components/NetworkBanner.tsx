@@ -1,13 +1,11 @@
 import React, { useEffect, useRef } from 'react';
 import { Animated, StyleSheet, View } from 'react-native';
-import { useTheme } from '../theme/ThemeContext';
 import { useNetwork } from '../context/NetworkContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text } from './Text';
 import { moderateScale, scale } from '../utils/responsive';
 
 export default function NetworkBanner() {
-  const { colors } = useTheme();
   const { status } = useNetwork();
   const insets = useSafeAreaInsets();
   const heightAnim = useRef(new Animated.Value(0)).current;
@@ -56,7 +54,7 @@ export default function NetworkBanner() {
       ]}
     >
       <View style={[styles.inner, { paddingTop: insets.top }]}>
-        <Text style={[styles.text, { color: textColor }]}>
+        <Text weight="medium" style={[styles.text, { color: textColor }]}>
           {isBackOnline
             ? 'Back online'
             : 'No connection — some features may be limited'}
@@ -85,6 +83,5 @@ const styles = StyleSheet.create({
   },
   text: {
     fontSize: moderateScale(10),
-    fontFamily: 'Geist-Medium',
   },
 });

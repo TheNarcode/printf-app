@@ -58,7 +58,7 @@ export default function PrivacyScreen({ navigation }: Props) {
 
         {section('02', 'Payments', <>
           <Text style={[styles.paragraph, { color: colors.textSecondary }]}>
-            All payments are handled by <Text style={{ color: colors.text, fontFamily: 'Geist-SemiBold' }}>Razorpay</Text> (RBI-regulated, PCI-DSS certified). printf never sees, stores, or touches your payment credentials — card numbers, UPI IDs, or banking tokens are entered directly into Razorpay's infrastructure.
+            All payments are handled by <Text weight="semibold" style={{ color: colors.text }}>Razorpay</Text> (RBI-regulated, PCI-DSS certified). printf never sees, stores, or touches your payment credentials — card numbers, UPI IDs, or banking tokens are entered directly into Razorpay's infrastructure.
           </Text>
           <View style={{ marginTop: scale(10) }}>
             <Text style={[styles.paragraph, { color: colors.textSecondary }]}>
@@ -133,8 +133,8 @@ export default function PrivacyScreen({ navigation }: Props) {
           <View style={styles.sectionContent}>
             <Text style={[styles.paragraph, { color: colors.textSecondary }]}>
               For all privacy-related enquiries, data requests, or account deletion, write to{' '}
-              <Text 
-                style={{ color: colors.text, textDecorationLine: 'underline', fontFamily: 'Geist-SemiBold' }}
+              <Text weight="semibold"
+                style={{ color: colors.text, textDecorationLine: 'underline' }}
                 onPress={() => Linking.openURL('mailto:thenarcode@gmail.com')}
               >
                 thenarcode@gmail.com
@@ -158,7 +158,6 @@ const styles = StyleSheet.create({
     marginBottom: scale(40),
   },
   effectiveDate: {
-    fontFamily: 'GeistMono-Regular',
     fontSize: moderateScale(11),
     letterSpacing: 1.5,
     textTransform: 'uppercase',
@@ -166,7 +165,6 @@ const styles = StyleSheet.create({
     opacity: 0.4,
   },
   mainTitle: {
-    fontFamily: 'Geist-Bold',
     fontSize: moderateScale(36),
     letterSpacing: -1,
   },
@@ -182,14 +180,12 @@ const styles = StyleSheet.create({
     marginBottom: scale(12),
   },
   sectionNum: {
-    fontFamily: 'GeistMono-Regular',
     fontSize: moderateScale(11),
     letterSpacing: 1.5,
     opacity: 0.35,
     width: scale(24),
   },
   sectionTitle: {
-    fontFamily: 'Geist-Bold',
     fontSize: moderateScale(13),
     letterSpacing: 1.2,
     textTransform: 'uppercase',
@@ -204,7 +200,6 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   rowLabel: {
-    fontFamily: 'GeistMono-Regular',
     fontSize: moderateScale(11),
     letterSpacing: 0.5,
     width: scale(112),
@@ -212,12 +207,10 @@ const styles = StyleSheet.create({
   },
   rowValue: {
     flex: 1,
-    fontFamily: 'Geist-Regular',
     fontSize: moderateScale(13),
     lineHeight: moderateScale(20),
   },
   paragraph: {
-    fontFamily: 'Geist-Regular',
     fontSize: moderateScale(13),
     lineHeight: moderateScale(22),
   },

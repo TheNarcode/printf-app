@@ -27,7 +27,6 @@ export function ThemeProvider({children}: {children: React.ReactNode}) {
   const systemScheme = useColorScheme();
   const [mode, setModeState] = useState<ThemeMode>('system');
 
-  // Restore persisted theme on mount
   useEffect(() => {
     (async () => {
       const stored = await getStoredThemeMode();
@@ -45,7 +44,7 @@ export function ThemeProvider({children}: {children: React.ReactNode}) {
 
   const setMode = useCallback((newMode: ThemeMode) => {
     setModeState(newMode);
-    setStoredThemeMode(newMode); // fire-and-forget persist
+    setStoredThemeMode(newMode); 
   }, []);
 
   const value = useMemo(
@@ -61,4 +60,3 @@ export function ThemeProvider({children}: {children: React.ReactNode}) {
 export function useTheme(): ThemeContextValue {
   return useContext(ThemeContext);
 }
-

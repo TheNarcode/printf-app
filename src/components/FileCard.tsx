@@ -28,7 +28,7 @@ const FileCard = memo(({file, onRemove}: FileCardProps) => {
       </View>
 
       <View style={styles.info}>
-        <Text style={[styles.name, {color: colors.text}]} numberOfLines={1}>{file.name}</Text>
+        <Text weight="medium" style={[styles.name, {color: colors.text}]} numberOfLines={1}>{file.name}</Text>
         <Text style={[styles.meta, {color: colors.textMuted}]}>
           {ext} · {formatFileSize(file.size)} · {file.pages} {file.pages === 1 ? 'page' : 'pages'}
         </Text>
@@ -57,7 +57,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center', alignItems: 'center',
   },
   info: {flex: 1, gap: 2},
-  name: {fontSize: moderateScale(14), fontFamily: 'Geist-Medium'},
+  name: {fontSize: moderateScale(14)},
   meta: {fontSize: moderateScale(10)},
   removeBtn: {padding: scale(4)},
 });

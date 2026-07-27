@@ -46,11 +46,10 @@ export default function TermsScreen({ navigation }: Props) {
       >
         {section('01', 'The Service', <>
           <Text style={[styles.paragraph, { color: colors.textSecondary }]}>
-            printf is a campus print service operated by <Text style={{ color: colors.text, fontFamily: 'Geist-SemiBold' }}>The Narcode</Text> — an informal student group, not a registered entity. The service is available at{' '}
+            printf is a campus print service operated by <Text weight="semibold" style={{ color: colors.text }}>The Narcode</Text> — an informal student group, not a registered entity. The service is available at{' '}
             <Text 
               style={{ color: colors.text, textDecorationLine: 'underline' }}
-              onPress={() => Linking.openURL('https://print-f.top')}
-            >
+              onPress={() => Linking.openURL('https://print-f.top')}>
               print-f.top
             </Text>{' '}
             and as an Android APK, restricted to campus use only.
@@ -68,10 +67,10 @@ export default function TermsScreen({ navigation }: Props) {
 
         {section('03', 'Payments & Refunds', <>
           <Text style={[styles.paragraph, { color: colors.textSecondary }]}>
-            All payments are processed by <Text style={{ color: colors.text, fontFamily: 'Geist-SemiBold' }}>Razorpay</Text> (RBI-regulated). Amounts are charged in INR via the payment methods available at checkout.
+            All payments are processed by <Text weight="semibold" style={{ color: colors.text }}>Razorpay</Text> (RBI-regulated). Amounts are charged in INR via the payment methods available at checkout.
           </Text>
           <View style={{ borderLeftWidth: 2, borderLeftColor: colors.text, paddingLeft: scale(16), marginTop: scale(12) }}>
-            <Text style={{ fontFamily: 'Geist-Bold', fontSize: moderateScale(12), letterSpacing: 0.5, textTransform: 'uppercase', color: colors.text, marginBottom: scale(4) }}>No Refunds</Text>
+            <Text weight="bold" style={{ fontSize: moderateScale(12), letterSpacing: 0.5, textTransform: 'uppercase', color: colors.text, marginBottom: scale(4) }}>No Refunds</Text>
             <Text style={[styles.paragraph, { color: colors.textSecondary }]}>
               All transactions are final. Refunds are not provided except where a verified system fault on our end causes an incorrect or failed print. Disputes must be raised within 24 hours via the contact details below.
             </Text>
@@ -82,7 +81,7 @@ export default function TermsScreen({ navigation }: Props) {
           {p('By uploading a file, you warrant that you hold the right to reproduce the content and that it does not infringe any law or third-party rights. You are solely responsible for the content you submit.')}
           <View style={{ marginTop: scale(10) }}>
             <Text style={[styles.paragraph, { color: colors.textSecondary }]}>
-              <Text style={{ color: colors.text, fontFamily: 'Geist-SemiBold' }}>Auto-deletion:</Text> All uploaded files are permanently deleted from Cloudflare R2 within 24 hours of upload, irrespective of order status.
+              <Text weight="semibold" style={{ color: colors.text }}>Auto-deletion:</Text> All uploaded files are permanently deleted from Cloudflare R2 within 24 hours of upload, irrespective of order status.
             </Text>
           </View>
           <View style={{ marginTop: scale(10) }}>
@@ -133,8 +132,8 @@ export default function TermsScreen({ navigation }: Props) {
           <View style={styles.sectionContent}>
             <Text style={[styles.paragraph, { color: colors.textSecondary }]}>
               For all enquiries regarding these terms, or to raise a dispute, write to{' '}
-              <Text 
-                style={{ color: colors.text, textDecorationLine: 'underline', fontFamily: 'Geist-SemiBold' }}
+              <Text weight="semibold"
+                style={{ color: colors.text, textDecorationLine: 'underline' }}
                 onPress={() => Linking.openURL('mailto:thenarcode@gmail.com')}
               >
                 thenarcode@gmail.com
@@ -158,7 +157,6 @@ const styles = StyleSheet.create({
     marginBottom: scale(40),
   },
   effectiveDate: {
-    fontFamily: 'GeistMono-Regular',
     fontSize: moderateScale(11),
     letterSpacing: 1.5,
     textTransform: 'uppercase',
@@ -166,7 +164,6 @@ const styles = StyleSheet.create({
     opacity: 0.4,
   },
   mainTitle: {
-    fontFamily: 'Geist-Bold',
     fontSize: moderateScale(36),
     letterSpacing: -1,
   },
@@ -182,14 +179,12 @@ const styles = StyleSheet.create({
     marginBottom: scale(12),
   },
   sectionNum: {
-    fontFamily: 'GeistMono-Regular',
     fontSize: moderateScale(11),
     letterSpacing: 1.5,
     opacity: 0.35,
     width: scale(24),
   },
   sectionTitle: {
-    fontFamily: 'Geist-Bold',
     fontSize: moderateScale(13),
     letterSpacing: 1.2,
     textTransform: 'uppercase',
@@ -204,19 +199,16 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   rowLabel: {
-    fontFamily: 'GeistMono-Regular',
     fontSize: moderateScale(11),
     letterSpacing: 0.5,
     opacity: 0.35,
   },
   rowValue: {
     flex: 1,
-    fontFamily: 'Geist-Regular',
     fontSize: moderateScale(13),
     lineHeight: moderateScale(20),
   },
   paragraph: {
-    fontFamily: 'Geist-Regular',
     fontSize: moderateScale(13),
     lineHeight: moderateScale(22),
   },

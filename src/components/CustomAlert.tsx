@@ -58,7 +58,7 @@ export function CustomAlert() {
         <View style={styles.overlay}>
           <TouchableWithoutFeedback>
             <View style={[styles.alertBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
-              <Text style={[styles.title, { color: colors.text }]}>{state.title}</Text>
+              <Text weight="bold" style={[styles.title, { color: colors.text }]}>{state.title}</Text>
               {!!state.message && (
                 <Text style={[styles.message, { color: colors.textSecondary }]}>{state.message}</Text>
               )}
@@ -85,7 +85,7 @@ export function CustomAlert() {
                         }
                       }}
                     >
-                      <Text style={[
+                      <Text weight="semibold" style={[
                         styles.buttonText,
                         isCancel && { color: colors.textSecondary },
                         !isCancel && !isDestructive && { color: colors.background },
@@ -126,12 +126,10 @@ const styles = StyleSheet.create({
     elevation: 10,
   },
   title: {
-    fontFamily: 'Geist-Bold',
     fontSize: moderateScale(18),
     marginBottom: scale(8),
   },
   message: {
-    fontFamily: 'Geist-Regular',
     fontSize: moderateScale(14),
     lineHeight: moderateScale(20),
     marginBottom: scale(24),
@@ -149,7 +147,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   buttonText: {
-    fontFamily: 'Geist-SemiBold',
     fontSize: moderateScale(14),
   },
 });

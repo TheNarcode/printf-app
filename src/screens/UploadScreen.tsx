@@ -104,8 +104,7 @@ export default function UploadScreen({ navigation }: Props) {
         color={colors.primary}
         label="Reading files…"
         direction="horizontal"
-        labelStyle={styles.readingText}
-      />
+        labelStyle={styles.readingText}/>
     </View>
   ) : null;
 
@@ -138,7 +137,7 @@ export default function UploadScreen({ navigation }: Props) {
 
       {hasFiles && (
         <View style={[commonStyles.bottomBar, { backgroundColor: colors.backgroundSecondary, paddingBottom: Math.max(insets.bottom, scale(16)) }]}>
-          <Text style={[styles.summary, { color: colors.textSecondary }]}>
+          <Text weight="medium" style={[styles.summary, { color: colors.textSecondary }]}>
             {files.length} {files.length === 1 ? 'file' : 'files'} selected ({formatFileSize(totalSize)})
           </Text>
           <Button label="Continue" onPress={handleNext} />
@@ -151,7 +150,7 @@ export default function UploadScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   centeredContent: { flex: 1, justifyContent: 'center', paddingHorizontal: scale(20) },
   listContent: { paddingHorizontal: scale(20), paddingTop: scale(24), paddingBottom: scale(32) },
-  summary: { fontSize: moderateScale(12), fontFamily: 'Geist-Medium', textAlign: 'center', marginBottom: scale(8) },
+  summary: { fontSize: moderateScale(12), textAlign: 'center', marginBottom: scale(8) },
   readingIndicator: {
     marginTop: scale(14),
     padding: scale(12),
@@ -159,5 +158,5 @@ const styles = StyleSheet.create({
     alignSelf: 'stretch',
     marginHorizontal: scale(4),
   },
-  readingText: { fontSize: moderateScale(13), fontFamily: 'Geist-Medium' },
+  readingText: { fontSize: moderateScale(13) },
 });

@@ -6,7 +6,7 @@ import { useTheme } from '../theme/ThemeContext';
 import { usePrintJob } from '../context/PrintJobContext';
 import { useAuth } from '../context/AuthContext';
 import { useNetwork } from '../context/NetworkContext';
-import { CustomAlertAPI } from '../components/CustomAlert';
+import { useRefreshOrders } from '../hooks/useRefreshOrders';
 import Header from '../components/Header';
 import OrderCard from '../components/OrderCard';
 import FAB from '../components/FAB';
@@ -29,24 +29,12 @@ function getGreeting(): string {
 export default function HomeScreen({ navigation }: Props) {
   const { colors, commonStyles } = useTheme();
   const insets = useSafeAreaInsets();
-  const { orders, refreshOrders, resetFlow } = usePrintJob();
+  const { orders, resetFlow } = usePrintJob();
   const { user } = useAuth();
   const { assertOnline } = useNetwork();
-  const [refreshing, setRefreshing] = useState(false);
+  const { isRefreshing, handleRefresh } = useRefreshOrders();
 
   useDoubleBackToExit();
-
-  const handleRefresh = useCallback(async () => {
-    if (!assertOnline()) return;
-    setRefreshing(true);
-    try {
-      await refreshOrders();
-    } catch {
-      CustomAlertAPI.alert('Connection Error', 'Unable to connect right now. Please try again later.');
-    } finally {
-      setRefreshing(false);
-    }
-  }, [refreshOrders, assertOnline]);
 
   const { recentOrders, stats } = useMemo(() => {
     let paymentPending = 0;
@@ -91,7 +79,7 @@ export default function HomeScreen({ navigation }: Props) {
   const renderOrder = useCallback(
     ({ item }: { item: Order }) => (
       <View style={styles.orderCardWrap}>
-        <OrderCard order={item} onPress={handleOrderPress} variant="list" />
+        <OrderCard order={item} onPress={handleOrderPress} />
       </View>
     ),
     [handleOrderPress],
@@ -107,8 +95,7 @@ export default function HomeScreen({ navigation }: Props) {
           <TouchableOpacity style={styles.settingsBtn} onPress={handleProfile} activeOpacity={0.7}>
             <Settings size={moderateScale(18)} color={colors.text} strokeWidth={1.8} />
           </TouchableOpacity>
-        }
-      />
+        }/>
 
       <FlatList
         data={recentOrders}
@@ -117,11 +104,10 @@ export default function HomeScreen({ navigation }: Props) {
         contentContainerStyle={[styles.listContent, { paddingBottom: insets.bottom + scale(100) }]}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={colors.textMuted} colors={[colors.primary]} progressBackgroundColor={colors.card} />
-        }
+          <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} tintColor={colors.textMuted} colors={[colors.primary]} progressBackgroundColor={colors.card} />}
         ListHeaderComponent={
           <View style={styles.headerSection}>
-            <Text style={[styles.greeting, { color: colors.text }]}>
+            <Text weight="bold" style={[styles.greeting, { color: colors.text }]}>
               {getGreeting()}, {firstName}.
             </Text>
 
@@ -137,9 +123,9 @@ export default function HomeScreen({ navigation }: Props) {
                     >
                       <View style={styles.statTop}>
                         <s.icon size={moderateScale(16)} color={s.iconColor} strokeWidth={1.8} />
-                        <Text style={[styles.statNumber, { color: colors.text }]}>{s.count}</Text>
+                        <Text weight="bold" style={[styles.statNumber, { color: colors.text }]}>{s.count}</Text>
                       </View>
-                      <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{s.label}</Text>
+                      <Text weight="medium" style={[styles.statLabel, { color: colors.textSecondary }]}>{s.label}</Text>
                     </TouchableOpacity>
                   ))}
                 </View>
@@ -147,9 +133,9 @@ export default function HomeScreen({ navigation }: Props) {
             </View>
 
             <View style={styles.recentHeader}>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>Recent Orders</Text>
+              <Text weight="bold" style={[styles.sectionTitle, { color: colors.text }]}>Recent Orders</Text>
               <TouchableOpacity onPress={handleViewAll} style={styles.viewAllBtn} activeOpacity={0.7}>
-                <Text style={[styles.viewAllText, { color: colors.textSecondary }]}>View All</Text>
+                <Text weight="medium" style={[styles.viewAllText, { color: colors.textSecondary }]}>View All</Text>
                 <ChevronRight size={moderateScale(12)} color={colors.textSecondary} strokeWidth={2} />
               </TouchableOpacity>
             </View>
@@ -157,11 +143,10 @@ export default function HomeScreen({ navigation }: Props) {
         }
         ListEmptyComponent={
           <View style={styles.emptyState}>
-            <Text style={[styles.emptyStateTitle, { color: colors.text }]}>No orders yet</Text>
+            <Text weight="semibold" style={[styles.emptyStateTitle, { color: colors.text }]}>No orders yet</Text>
             <Text style={[styles.emptyStateDesc, { color: colors.textMuted }]}>Tap the + button to start printing.</Text>
           </View>
-        }
-      />
+        }/>
 
       <FAB onPress={handleNewOrder} />
     </View>
@@ -173,18 +158,18 @@ const styles = StyleSheet.create({
   headerSection: { paddingTop: scale(24) },
   orderCardWrap: { marginBottom: scale(8) },
   settingsBtn: { padding: scale(8), borderRadius: 999, alignItems: 'center', justifyContent: 'center' },
-  greeting: { fontSize: moderateScale(24), fontFamily: 'Geist-Bold', letterSpacing: -0.5, marginBottom: scale(16) },
-  statsGrid: { gap: scale(8), marginBottom: scale(28) },
-  statsRow: { flexDirection: 'row', gap: scale(8) },
+  greeting: { fontSize: moderateScale(24), letterSpacing: -0.5, marginBottom: scale(16) },
+  statsGrid: { gap: scale(6), marginBottom: scale(28) },
+  statsRow: { flexDirection: 'row', gap: scale(6) },
   statCard: { flex: 1, padding: scale(14), borderRadius: scale(12), borderWidth: 1 },
   statTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: scale(6) },
-  statNumber: { fontSize: moderateScale(20), fontFamily: 'Geist-Bold' },
-  statLabel: { fontSize: moderateScale(11), fontFamily: 'Geist-Medium' },
+  statNumber: { fontSize: moderateScale(20) },
+  statLabel: { fontSize: moderateScale(11) },
   recentHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: scale(12) },
-  sectionTitle: { fontSize: moderateScale(15), fontFamily: 'Geist-Bold' },
+  sectionTitle: { fontSize: moderateScale(15) },
   viewAllBtn: { flexDirection: 'row', alignItems: 'center', gap: scale(2) },
-  viewAllText: { fontSize: moderateScale(12), fontFamily: 'Geist-Medium' },
+  viewAllText: { fontSize: moderateScale(12) },
   emptyState: { alignItems: 'center', justifyContent: 'center', paddingVertical: scale(48) },
-  emptyStateTitle: { fontSize: moderateScale(16), fontFamily: 'Geist-SemiBold', marginBottom: scale(4) },
-  emptyStateDesc: { fontSize: moderateScale(13), fontFamily: 'Geist-Regular' },
+  emptyStateTitle: { fontSize: moderateScale(16), marginBottom: scale(4) },
+  emptyStateDesc: { fontSize: moderateScale(13) },
 });

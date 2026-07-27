@@ -98,12 +98,11 @@ export default function OrderResultScreen({ navigation, route }: Props) {
             autoplay
             loop={false}
             style={{ width: lottieSize, height: lottieSize }}
-            segment={success ? [1, 43] : [1, 58]}
-          />
+            segment={success ? [1, 43] : [1, 58]}/>
         </Animated.View>
 
         <Animated.View style={[styles.textSection, { opacity: fadeAnim }]}>
-          <Text style={[styles.title, { color: colors.text }]}>
+          <Text weight="bold" style={[styles.title, { color: colors.text }]}>
             {success ? 'Order Placed!' : 'Payment Failed'}
           </Text>
           <Text style={[styles.subtitle, { color: colors.textMuted }]}>
@@ -122,10 +121,10 @@ export default function OrderResultScreen({ navigation, route }: Props) {
                 },
               ]}
             >
-              <Text style={[styles.refLabel, { color: colors.textMuted }]}>
+              <Text weight="medium" style={[styles.refLabel, { color: colors.textMuted }]}>
                 Order Reference
               </Text>
-              <Text style={[styles.refValue, { color: colors.text }]}>
+              <Text weight="bold" style={[styles.refValue, { color: colors.text }]}>
                 {order.orderRef}
               </Text>
             </View>
@@ -139,8 +138,7 @@ export default function OrderResultScreen({ navigation, route }: Props) {
               <Button
                 label="Back to Home"
                 variant="outline"
-                onPress={handleGoHome}
-              />
+                onPress={handleGoHome}/>
             </>
           ) : (
             <Button label="Go Home" onPress={handleGoHome} />
@@ -162,7 +160,6 @@ const styles = StyleSheet.create({
   textSection: { alignItems: 'center', gap: scale(10) },
   title: {
     fontSize: moderateScale(26),
-    fontFamily: 'Geist-Bold',
     textAlign: 'center',
   },
   subtitle: {
@@ -179,10 +176,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: scale(4),
   },
-  refLabel: { fontSize: moderateScale(11), fontFamily: 'Geist-Medium' },
+  refLabel: { fontSize: moderateScale(11) },
   refValue: {
     fontSize: moderateScale(20),
-    fontFamily: 'Geist-Bold',
     letterSpacing: 0.5,
   },
   btnSection: { gap: scale(10) },

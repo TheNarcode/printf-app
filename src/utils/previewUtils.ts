@@ -23,8 +23,10 @@ export function parsePageRange(rangeStr: string, totalPages: number): number[] {
       const start = parseInt(startStr.trim(), 10);
       const end = parseInt(endStr.trim(), 10);
       if (!isNaN(start) && !isNaN(end)) {
-        for (let i = Math.max(1, start); i <= Math.min(totalPages, end); i++) {
-          result.add(i - 1); // convert to 0-indexed
+        const from = Math.min(start, end);
+        const to = Math.max(start, end);
+        for (let i = Math.max(1, from); i <= Math.min(totalPages, to); i++) {
+          result.add(i - 1);
         }
       }
     } else {
@@ -41,34 +43,25 @@ export function parsePageRange(rangeStr: string, totalPages: number): number[] {
     : Array.from({ length: totalPages }, (_, i) => i);
 }
 
-/**
- * Get which page indices to display on a given "sheet" of paper.
- * E.g. with pagesPerSheet=4 and sheetIndex=1, returns pages[4..7].
- */
 export function getSheetPages(
   allPages: number[],
   pagesPerSheet: number,
   sheetIndex: number,
 ): number[] {
-  const start = sheetIndex * pagesPerSheet;
-  return allPages.slice(start, start + pagesPerSheet);
+  const safePps = Math.max(1, pagesPerSheet || 1);
+  const safeIndex = Math.max(0, sheetIndex || 0);
+  const start = safeIndex * safePps;
+  return allPages.slice(start, start + safePps);
 }
 
-/**
- * Total number of physical sheets needed to print all selected pages.
- */
 export function getTotalSheets(
   allPages: number[],
   pagesPerSheet: number,
 ): number {
-  return Math.max(1, Math.ceil(allPages.length / pagesPerSheet));
+  const safePps = Math.max(1, pagesPerSheet || 1);
+  return Math.max(1, Math.ceil(allPages.length / safePps));
 }
 
-/**
- * Generate page thumbnail images from a PDF using react-native-pdf-thumbnail.
- * Returns an object mapping 0-indexed page numbers to image URIs.
- * Falls back gracefully if thumbnail generation fails for any page.
- */
 export async function generatePdfThumbnails(
   uri: string,
   pageIndices: number[],
@@ -79,14 +72,12 @@ export async function generatePdfThumbnails(
   try {
     PdfThumbnail = require('react-native-pdf-thumbnail').default;
   } catch {
-    console.warn('react-native-pdf-thumbnail not available');
     return thumbnails;
   }
 
-  // Normalize the URI for the native module
   let filePath = uri;
+  let tempCopiedPath: string | null = null;
 
-  // Handle content:// URIs by copying to cache
   if (filePath.startsWith('content://')) {
     try {
       const dest = `${
@@ -94,25 +85,30 @@ export async function generatePdfThumbnails(
       }/thumb_src_${Date.now()}.pdf`;
       await ReactNativeBlobUtil.fs.cp(filePath, dest);
       filePath = dest;
-    } catch (e) {
-      console.warn('Failed to copy content URI for thumbnails:', e);
+      tempCopiedPath = dest;
+    } catch {
       return thumbnails;
     }
   }
 
-  // Strip file:// prefix if present — the native module expects a plain path
   filePath = filePath.replace(/^file:\/\//, '');
 
-  // Generate thumbnails for each requested page
-  for (const pageIdx of pageIndices) {
-    try {
-      const result = await PdfThumbnail.generate(filePath, pageIdx);
-      if (result?.uri) {
-        thumbnails[pageIdx] = result.uri;
+  try {
+    for (const pageIdx of pageIndices) {
+      try {
+        const result = await PdfThumbnail.generate(filePath, pageIdx);
+        if (result?.uri) {
+          thumbnails[pageIdx] = result.uri;
+        }
+      } catch {
+        // Skip failed page render
       }
-    } catch (e) {
-      console.warn(`Failed to generate thumbnail for page ${pageIdx}:`, e);
-      // Skip failed pages — we'll show a placeholder for them
+    }
+  } finally {
+    if (tempCopiedPath) {
+      try {
+        await ReactNativeBlobUtil.fs.unlink(tempCopiedPath);
+      } catch {}
     }
   }
 
