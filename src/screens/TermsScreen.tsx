@@ -67,7 +67,7 @@ export default function TermsScreen({ navigation }: Props) {
 
         {section('03', 'Payments & Refunds', <>
           <Text style={[styles.paragraph, { color: colors.textSecondary }]}>
-            All payments are processed by <Text weight="semibold" style={{ color: colors.text }}>Razorpay</Text> (RBI-regulated). Amounts are charged in INR via the payment methods available at checkout.
+            All payments are processed by <Text weight="semibold" style={{ color: colors.text }}>Zoho Payments</Text> (RBI-regulated). Amounts are charged in INR via the payment methods available at checkout.
           </Text>
           <View style={{ borderLeftWidth: 2, borderLeftColor: colors.text, paddingLeft: scale(16), marginTop: scale(12) }}>
             <Text weight="bold" style={{ fontSize: moderateScale(12), letterSpacing: 0.5, textTransform: 'uppercase', color: colors.text, marginBottom: scale(4) }}>No Refunds</Text>

@@ -213,7 +213,7 @@ export default function OrderDetailScreen({ navigation, route }: Props) {
           <View style={styles.securityNotice}>
             <Lock size={moderateScale(10)} color={colors.textMuted} />
             <Text style={[styles.securityText, { color: colors.textMuted }]}>
-              Secured by Razorpay
+              Secured by Zoho Payments
             </Text>
           </View>
         </View>

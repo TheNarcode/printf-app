@@ -1,10 +1,10 @@
 import { useCallback, useState } from 'react';
-import RazorpayCheckout from 'react-native-razorpay';
-import { RAZORPAY_KEY_ID } from '@env';
+import { showCheckout } from 'zoho-payments-react-native-sdk';
+import type { ShowCheckoutOptions } from 'zoho-payments-react-native-sdk';
 import { useAuth } from '../context/AuthContext';
 import { usePrintJob } from '../context/PrintJobContext';
 import { CustomAlertAPI } from '../components/CustomAlert';
-import { getPaymentErrorReason } from '../utils/razorpay';
+import { getPaymentErrorReason } from '../utils/zoho';
 import type { Order } from '../types';
 
 export function usePayOrder() {
@@ -17,33 +17,33 @@ export function usePayOrder() {
       if (!order.paymentRequestId) return;
       setIsPaying(true);
 
-      const amount = Math.round((order.totalPrice + order.convenienceFee) * 100);
-
-      const options = {
+      const options: ShowCheckoutOptions = {
+        paymentSessionId: order.paymentRequestId,
         description: `Payment for Print Order ${order.orderRef}`,
-        currency: 'INR',
-        key: RAZORPAY_KEY_ID,
-        amount: amount.toString(),
-        name: 'printf',
-        order_id: order.paymentRequestId,
-        prefill: {
-          email: user?.email || '',
-          name: user?.name || '',
-        },
-        theme: { color: '#18181B' },
+        name: user?.name || '',
+        email: user?.email || '',
+        phone: '9876543210'
       };
 
       try {
-        await RazorpayCheckout.open(options);
+        const result = await showCheckout(options);
 
-        refreshOrders().catch(() => {});
-        if (onSuccess) onSuccess();
+        if (result?.paymentId) {
+          refreshOrders().catch(() => {});
+          if (onSuccess) onSuccess();
 
-        CustomAlertAPI.alert(
-          'Payment Successful',
-          'Your order is now confirmed and will be processed shortly.',
-        );
+          CustomAlertAPI.alert(
+            'Payment Successful',
+            'Your order is now confirmed and will be processed shortly.',
+          );
+        } else {
+          CustomAlertAPI.alert(
+            'Payment Failed',
+            'Your payment could not be processed. Please try again with a different payment method.',
+          );
+        }
       } catch (err: unknown) {
+        console.error('[Zoho usePayOrder Error]', err);
         const reason = getPaymentErrorReason(err);
         if (reason === 'cancelled') {
           CustomAlertAPI.alert(

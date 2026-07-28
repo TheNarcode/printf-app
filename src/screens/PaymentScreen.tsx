@@ -1,9 +1,9 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { FileText, Lock } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import RazorpayCheckout from 'react-native-razorpay';
-import { RAZORPAY_KEY_ID } from '@env';
+import { initialize, showCheckout } from 'zoho-payments-react-native-sdk';
+import type { ShowCheckoutOptions } from 'zoho-payments-react-native-sdk';
 import { useTheme } from '../theme/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import { usePrintJob } from '../context/PrintJobContext';
@@ -17,7 +17,13 @@ import { Text } from '../components/Text';
 import { scale, moderateScale } from '../utils/responsive';
 import { createOrder, buildPrintConfig } from '../services/api';
 import { getFileId } from '../services/fileUploadManager';
-import { getPaymentErrorReason } from '../utils/razorpay';
+import { getPaymentErrorReason } from '../utils/zoho';
+import {
+  ZOHO_API_KEY,
+  ZOHO_ACCOUNT_ID,
+  ZOHO_DOMAIN,
+  ZOHO_ENVIRONMENT,
+} from '@env';
 
 interface Props {
   navigation: any;
@@ -31,6 +37,15 @@ export default function PaymentScreen({ navigation }: Props) {
   const { assertOnline } = useNetwork();
   const [isPaying, setIsPaying] = useState(false);
   const [statusText, setStatusText] = useState('');
+
+  useEffect(() => {
+    initialize(
+      ZOHO_API_KEY,
+      ZOHO_ACCOUNT_ID,
+      ZOHO_DOMAIN as 'india' | 'us',
+      ZOHO_ENVIRONMENT as 'live' | 'sandbox',
+    );
+  }, []);
 
   const { items, fee, total } = useMemo(() => getOrderSummary(), [getOrderSummary]);
 
@@ -65,25 +80,32 @@ export default function PaymentScreen({ navigation }: Props) {
         buildPrintConfig(fileIds[item.file.id], item.file.name, item.file.type, item.settings),
       );
 
-      const rpOrder = await createOrder(printConfigs, token);
+      const order = await createOrder(printConfigs, token);
+
+      const sessionId = order.payments_session_id || '';
+      if (!sessionId) {
+        throw new Error('Failed to obtain payment session ID from server');
+      }
 
       setStatusText('Opening payment...');
-      const options = {
-        description: `Payment for Print Order ${rpOrder.receipt || rpOrder.localOrderId}`,
-        currency: rpOrder.currency || 'INR',
-        key: RAZORPAY_KEY_ID,
-        amount: rpOrder.amount,
-        name: 'printf',
-        order_id: rpOrder.id,
-        prefill: { email: user?.email || '', name: user?.name || '' },
-        theme: { color: '#18181B' },
+      const options: ShowCheckoutOptions = {
+        paymentSessionId: sessionId, 
+        description: `Payment for Print Order ${order.receipt || order.localOrderId}`, 
+        name: user?.name || '',   
+        email: user?.email || '',
+        phone: '9876543210'
       };
 
-      await RazorpayCheckout.open(options);
+      const result = await showCheckout(options);
 
-      refreshOrders().catch(() => {});
-      safeNavigateResult({ success: true, orderId: rpOrder.localOrderId });
+      if (result?.paymentId) {
+        refreshOrders().catch(() => {});
+        safeNavigateResult({ success: true, orderId: order.localOrderId });
+      } else {
+        safeNavigateResult({ success: false, reason: 'payment_failed' });
+      }
     } catch (err: unknown) {
+      console.error('[Zoho Payment Error]', err);
       const reason = getPaymentErrorReason(err);
       if (reason === 'cancelled') {
         safeNavigateResult({ success: false, reason: 'cancelled' });
@@ -166,12 +188,11 @@ export default function PaymentScreen({ navigation }: Props) {
         <Button
           label={isPaying ? (statusText || 'Processing...') : `Pay ${formatCurrency(total)}`}
           onPress={handlePay}
-          isLoading={isPaying}
-        />
+          isLoading={isPaying}/>
         <View style={styles.securityNotice}>
           <Lock size={moderateScale(10)} color={colors.textMuted} />
           <Text style={[styles.securityText, { color: colors.textMuted }]}>
-            Secured by Razorpay
+            Secured by Zoho Payments
           </Text>
         </View>
       </View>

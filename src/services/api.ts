@@ -147,20 +147,21 @@ export async function uploadFile(
   }
 }
 
-export interface RazorpayOrderResponse {
-  id: string;
-  amount: number;
-  currency: string;
-  receipt: string;
-  status: string;
+export interface CreateOrderResponse {
+  id?: string;
+  amount: number | string;  
+  currency?: string;
+  receipt?: string;
+  status?: string;
   localOrderId: string;
+  payments_session_id?: string; 
   [key: string]: any;
 }
 
 export async function createOrder(
   printConfigs: PrintConfigPayload[],
   idToken?: string | null,
-): Promise<RazorpayOrderResponse> {
+): Promise<CreateOrderResponse> {
   const response = await fetchWithTimeout(`${API_BASE_URL}/order/create`, {
     method: 'POST',
     headers: {
@@ -305,15 +306,16 @@ export function apiOrderToAppOrder(apiOrder: ApiOrder): Order {
   );
   const appStatus = mapApiStatus(apiOrder.status, apiOrder.paid);
 
+  const totalAmountNum = typeof apiOrder.amount === 'string' ? parseFloat(apiOrder.amount) : apiOrder.amount;
+  const itemsPriceSum = filesWithSettings.reduce((s, f) => s + f.price, 0);
+
   return {
     id: apiOrder.id,
     orderRef: apiOrder.id.substring(0, 8).toUpperCase(),
     createdAt: apiOrder.createdAt,
     files: filesWithSettings,
-    totalPrice: apiOrder.amount / 100,
-    convenienceFee:
-      apiOrder.amount / 100 -
-      filesWithSettings.reduce((s, f) => s + f.price, 0),
+    totalPrice: totalAmountNum,
+    convenienceFee: Math.max(0, Math.round((totalAmountNum - itemsPriceSum) * 100) / 100),
     paymentRequestId: apiOrder.paymentRequestId,
     status: appStatus,
     paid: apiOrder.paid,

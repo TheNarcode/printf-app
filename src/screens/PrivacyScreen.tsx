@@ -58,16 +58,16 @@ export default function PrivacyScreen({ navigation }: Props) {
 
         {section('02', 'Payments', <>
           <Text style={[styles.paragraph, { color: colors.textSecondary }]}>
-            All payments are handled by <Text weight="semibold" style={{ color: colors.text }}>Razorpay</Text> (RBI-regulated, PCI-DSS certified). printf never sees, stores, or touches your payment credentials — card numbers, UPI IDs, or banking tokens are entered directly into Razorpay's infrastructure.
+            All payments are handled by <Text weight="semibold" style={{ color: colors.text }}>Zoho Payments</Text> (RBI-regulated, PCI-DSS certified). printf never sees, stores, or touches your payment credentials — card numbers, UPI IDs, or banking tokens are entered directly into Zoho's infrastructure.
           </Text>
           <View style={{ marginTop: scale(10) }}>
             <Text style={[styles.paragraph, { color: colors.textSecondary }]}>
-              We share your email with Razorpay only to generate a payment order. Their processing is governed by the{' '}
+              We share your email with Zoho Payments only to generate a payment order. Their processing is governed by the{' '}
               <Text 
                 style={{ color: colors.text, textDecorationLine: 'underline' }}
-                onPress={() => Linking.openURL('https://razorpay.com/privacy-policy/')}
+                onPress={() => Linking.openURL('https://www.zoho.com/privacy.html')}
               >
-                Razorpay Privacy Policy
+                Zoho Privacy Policy
               </Text>.
             </Text>
           </View>
